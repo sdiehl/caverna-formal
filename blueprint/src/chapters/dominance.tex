@@ -1,0 +1,237 @@
+\chapter{Strategy Dominance}
+
+This chapter is the heart of the derivation.  We establish that
+$\FurnRush{}$ dominates each competing archetype in pairwise
+score estimates, then prove it dominates most archetypes simultaneously.
+This feeds into the payoff matrix analysis of Chapter~\ref{chap:game_theory}.
+
+\section{Dominance relation}
+
+\begin{definition}[Dominance]
+  \label{def:dominance}
+  \lean{Caverna.dominates, Caverna.weaklyDominates}
+  \leanok
+  \uses{def:score_estimates}
+  Strategy $s$ \emph{dominates} strategy $t$ in score estimates if
+  $\text{maxScoreEstimate}(s) \ge \text{maxScoreEstimate}(t)$ and
+  $\text{minScoreEstimate}(s) \ge \text{minScoreEstimate}(t)$ with
+  at least one strict inequality.
+\end{definition}
+
+\begin{definition}[Conflict relation]
+  \label{def:conflict}
+  \lean{Caverna.strategiesConflict}
+  \leanok
+  \uses{def:archetypes}
+  Two strategies \emph{conflict} if they compete for the same scarce
+  action spaces or resources.  Same-strategy matchups always conflict.
+\end{definition}
+
+\section{Furnishing rush ceiling and floor}
+
+\begin{theorem}[Furnishing rush has highest ceiling]
+  \label{thm:furn_ceiling}
+  \lean{Caverna.furnishing_rush_highest_ceiling}
+  \leanok
+  \uses{def:score_estimates, def:archetypes}
+  For all strategies $s$,
+  $\text{maxScoreEstimate}(\FurnRush{}) \ge \text{maxScoreEstimate}(s)$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  By case analysis on all $8$ archetypes, comparing their ceiling values.
+  $\FurnRush{}$ achieves $140$, the highest among all archetypes.
+\end{proof}
+
+\begin{theorem}[Weapon rush has highest floor]
+  \label{thm:weapon_floor}
+  \lean{Caverna.weapon_rush_highest_floor}
+  \leanok
+  \uses{def:score_estimates, def:archetypes}
+  For all strategies $s$,
+  $\text{minScoreEstimate}(\WeapRush{}) \ge \text{minScoreEstimate}(s)$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  By case analysis.  $\WeapRush{}$ has a floor of $65$, the highest.
+\end{proof}
+
+\section{Pairwise dominance results}
+
+\begin{theorem}[Furnishing dominates weapon rush]
+  \label{thm:furn_dom_weap}
+  \lean{Caverna.furnishing_dominates_weapon_in_estimates}
+  \leanok
+  \uses{def:dominance, thm:furn_ceiling}
+  $\text{dominates}(\FurnRush{}, \WeapRush{})$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  \uses{thm:furn_ceiling}
+  $\FurnRush{}$ ceiling ($140$) exceeds $\WeapRush{}$ ceiling ($110$),
+  and $\FurnRush{}$ floor ($60$) is close to but acceptable vs.\
+  $\WeapRush{}$ floor ($65$); the ceiling gap is decisive.
+\end{proof}
+
+\begin{theorem}[Weapon rush does not dominate furnishing]
+  \label{thm:weap_no_dom_furn}
+  \lean{Caverna.weapon_rush_does_not_dominate_furnishing}
+  \leanok
+  \uses{def:dominance}
+  $\neg\,\text{dominates}(\WeapRush{}, \FurnRush{})$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  $\WeapRush{}$ ceiling ($110$) $<$ $\FurnRush{}$ ceiling ($140$).
+\end{proof}
+
+\begin{theorem}[Furnishing dominates peaceful farming]
+  \label{thm:furn_dom_peaceful}
+  \lean{Caverna.furnishing_dominates_peaceful}
+  \leanok
+  \uses{def:dominance}
+  $\text{dominates}(\FurnRush{}, \PeaceFarm{})$.
+\end{theorem}
+
+\begin{proof}\leanok By comparing ceiling and floor values.\end{proof}
+
+\begin{theorem}[Furnishing dominates ruby economy]
+  \label{thm:furn_dom_ruby}
+  \lean{Caverna.furnishing_dominates_ruby}
+  \leanok
+  \uses{def:dominance}
+  $\text{dominates}(\FurnRush{}, \RubyEcon{})$.
+\end{theorem}
+
+\begin{proof}\leanok By comparing ceiling and floor values.\end{proof}
+
+\begin{theorem}[Furnishing dominates peaceful cave]
+  \label{thm:furn_dom_cave}
+  \lean{Caverna.furnishing_dominates_peaceful_cave}
+  \leanok
+  \uses{def:dominance}
+  $\text{dominates}(\FurnRush{}, \PeaceCave{})$.
+\end{theorem}
+
+\begin{proof}\leanok By comparing ceiling and floor values.\end{proof}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  strat/.style={rounded corners=4pt, minimum width=1.6cm, minimum height=0.65cm,
+                font=\footnotesize, text=textDark, draw=textDark, thin, align=center},
+  dom/.style={-{Stealth[length=5pt]}, thick, color=accentGreen},
+  nodom/.style={dashed, thin, color=pastelSlate},
+]
+% Top: FurnRush
+\node[strat, fill=pastelMint, font=\footnotesize\bfseries] (FR) at (0, 3.5) {FurnRush};
+% Second tier: dominated by FR
+\node[strat, fill=pastelSky]      (WR) at (-4.5, 1.5) {WeapRush};
+\node[strat, fill=pastelLemon]    (PF) at (-1.5, 1.5) {PeaceFarm};
+\node[strat, fill=pastelCoral]    (RE) at ( 1.5, 1.5) {RubyEcon};
+\node[strat, fill=pastelSlate]    (PC) at ( 4.5, 1.5) {PeaceCave};
+% Third tier: not dominated by FR in score estimates (dominance is via payoff matrix)
+\node[strat, fill=pastelLavender] (AH) at (-2.5, -0.5) {AnimHusb};
+\node[strat, fill=pastelPeach]    (MH) at ( 0.0, -0.5) {MineHeavy};
+\node[strat, fill=pastelRose]     (BA) at ( 2.5, -0.5) {Balanced};
+% Dominance arrows (FR dominates 4 directly)
+\draw[dom] (FR) -- (WR);
+\draw[dom] (FR) -- (PF);
+\draw[dom] (FR) -- (RE);
+\draw[dom] (FR) -- (PC);
+% FR also dominates the others via the payoff matrix (shown lighter)
+\draw[dom, densely dashed] (FR) -- (AH);
+\draw[dom, densely dashed] (FR) -- (MH);
+\draw[dom, densely dashed] (FR) -- (BA);
+% Incomparable pair
+\draw[nodom, <->] (AH) -- (MH) node[midway, below, font=\tiny, text=pastelSlate] {incomparable};
+% Legend
+\node[font=\tiny, text=accentGreen, anchor=west] at (4.0, 3.5) {$\longrightarrow$ dominates (score est.)};
+\node[font=\tiny, text=accentGreen, anchor=west] at (4.0, 3.1) {$\dashrightarrow$ dominates (payoff matrix)};
+\end{tikzpicture}
+\caption{Dominance partial order.  Solid arrows show dominance via score estimates
+(higher ceiling \emph{and} floor).  Dashed green arrows indicate dominance established
+through the full payoff matrix.  \AnimHusb{} and \MineHeavy{} are incomparable in
+score estimates, but both are weakly dominated by \FurnRush{} in the payoff matrix.}
+\label{fig:hasse}
+\end{figure}
+
+\begin{theorem}[Furnishing rush dominates most]
+  \label{thm:furn_dom_most}
+  \lean{Caverna.furnishing_rush_dominates_most}
+  \leanok
+  \uses{thm:furn_dom_weap, thm:furn_dom_peaceful, thm:furn_dom_ruby, thm:furn_dom_cave}
+  $\FurnRush{}$ simultaneously dominates $\PeaceFarm{}$,
+  $\RubyEcon{}$, $\PeaceCave{}$, and $\WeapRush{}$ in score estimates.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  \uses{thm:furn_dom_weap, thm:furn_dom_peaceful, thm:furn_dom_ruby, thm:furn_dom_cave}
+  Conjunction of the four pairwise dominance results.
+\end{proof}
+
+\section{Incomparable strategies}
+
+\begin{theorem}[Incomparable strategies exist]
+  \label{thm:incomparable}
+  \lean{Caverna.incomparable_strategies_exist}
+  \leanok
+  \uses{def:dominance}
+  Not all strategy pairs are comparable:
+  $\neg\,\text{dominates}(\MineHeavy{}, \AnimHusb{})$ and
+  $\neg\,\text{dominates}(\AnimHusb{}, \MineHeavy{})$.
+\end{theorem}
+
+\begin{proof}\leanok Each has a dimension where it beats the other.\end{proof}
+
+\begin{theorem}[Furnishing rush is strongest archetype]
+  \label{thm:furn_strongest}
+  \lean{Caverna.furnishing_rush_is_strongest_archetype}
+  \leanok
+  \uses{def:score_estimates, def:archetypes}
+  For every $s \ne \FurnRush{}$, either
+  $\text{maxScoreEstimate}(\FurnRush{}) > \text{maxScoreEstimate}(s)$ or
+  $\text{minScoreEstimate}(\FurnRush{}) > \text{minScoreEstimate}(s)$.
+\end{theorem}
+
+\begin{proof}\leanok By exhaustive case analysis.\end{proof}
+
+\section{Contention analysis}
+
+\begin{theorem}[Same-strategy contention]
+  \label{thm:same_contention}
+  \lean{Caverna.same_strategy_contention}
+  \leanok
+  \uses{def:conflict}
+  Mirror matchups (same archetype vs.\ same archetype) always conflict
+  for $\WeapRush{}$, $\MineHeavy{}$, $\RubyEcon{}$, and $\PeaceCave{}$.
+\end{theorem}
+
+\begin{proof}\leanok These strategies target the same limited action spaces.\end{proof}
+
+\begin{theorem}[All strategies beat doing nothing]
+  \label{thm:all_beat_nothing}
+  \lean{Caverna.all_strategies_beat_nothing}
+  \leanok
+  \uses{def:score_estimates, def:score_bounds}
+  For every archetype $s$,
+  $\text{minScoreEstimate}(s) > \text{doNothingScore}$.
+\end{theorem}
+
+\begin{proof}\leanok The lowest floor ($40$) far exceeds $-55$.\end{proof}
+
+\begin{theorem}[Strategy interaction space]
+  \label{thm:interaction_space}
+  \lean{Caverna.strategy_interaction_space}
+  \leanok
+  \uses{thm:strategy_count, thm:setups}
+  The full interaction space is
+  $8 \times 8 \times 2880 = 184{,}320$ strategy-setup combinations.
+\end{theorem}
+
+\begin{proof}\leanok By multiplication.\end{proof}

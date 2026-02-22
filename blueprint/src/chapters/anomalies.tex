@@ -1,0 +1,191 @@
+\chapter{Degenerate Combos and Edge Cases}
+
+This chapter analyzes specific furnishing combinations and resource
+chains that could potentially break the dominance result.  We show
+that each apparent exploit has a natural ceiling, confirming that
+the payoff matrix remains valid under extreme play patterns.
+
+\section{Beer Parlor}
+
+The Beer Parlor converts grain to gold: $2$ grain yields $3$ gold
+(or $4$ food).  It is rate-limited by grain stockpile.
+
+\begin{definition}[Beer Parlor gold function]
+  \label{def:beer_parlor}
+  \lean{Caverna.beerParlorGold}
+  \leanok
+  $\text{beerParlorGold}(g) = \lfloor g / 2 \rfloor \times 3$
+  for $g$ grain.
+\end{definition}
+
+\begin{theorem}[Beer Parlor maximum gold]
+  \label{thm:beer_max}
+  \lean{Caverna.beer_parlor_max_gold}
+  \leanok
+  \uses{def:beer_parlor}
+  $\text{beerParlorGold}(20) = 30$.
+  Even with $20$ grain (an extreme stockpile), the Beer Parlor
+  produces at most $30$ gold.
+\end{theorem}
+
+\begin{proof}\leanok $\lfloor 20/2 \rfloor \times 3 = 30$.\end{proof}
+
+\begin{theorem}[Beer Parlor realistic output]
+  \label{thm:beer_realistic}
+  \lean{Caverna.beer_parlor_realistic, Caverna.beer_parlor_small}
+  \leanok
+  \uses{def:beer_parlor}
+  $\text{beerParlorGold}(10) = 15$ and $\text{beerParlorGold}(4) = 6$.
+  In practice, a farming player might accumulate $\sim 10$ grain,
+  yielding $15$ gold, not an unbounded engine.
+\end{theorem}
+
+\begin{proof}\leanok By computation.\end{proof}
+
+\section{Weapon Storage}
+
+\begin{theorem}[Weapon Storage theoretical max]
+  \label{thm:weapon_storage}
+  \lean{Caverna.weapon_storage_theoretical_max, Caverna.weapon_storage_realistic}
+  \leanok
+  \uses{def:bonus_points}
+  Weapon Storage gives $+3$ per armed dwarf: theoretical max is $15$
+  (all $5$ dwarfs armed).  Realistically, $3$ armed dwarfs yield $9$.
+\end{theorem}
+
+\begin{proof}\leanok $3 \times 5 = 15$ and $3 \times 3 = 9$.\end{proof}
+
+\section{Ruby economy chain}
+
+\begin{theorem}[Ruby supplier output]
+  \label{thm:ruby_supplier}
+  \lean{Caverna.ruby_supplier_output, Caverna.ruby_food_conversion}
+  \leanok
+  Mining $8$ rubies over a game yields $4$ ruby mine activations
+  (at $2$ rubies each).  Those $8$ rubies can convert to $16$ food
+  as emergency rations.
+\end{theorem}
+
+\begin{proof}\leanok $8/2 = 4$ and $8 \times 2 = 16$.\end{proof}
+
+\begin{theorem}[Ruby to State Parlor net]
+  \label{thm:ruby_state_parlor}
+  \lean{Caverna.ruby_to_state_parlor_net}
+  \leanok
+  Converting rubies to gold for State Parlor: net yield is $12 - 2 = 10$
+  points after accounting for conversion overhead.
+\end{theorem}
+
+\begin{proof}\leanok By the conversion chain arithmetic.\end{proof}
+
+\section{Blacksmithing Parlor}
+
+\begin{theorem}[Blacksmithing Parlor scales]
+  \label{thm:blacksmith_scales}
+  \lean{Caverna.blacksmithing_parlor_scales}
+  \leanok
+  $\text{blacksmithingParlorGold}(5, 5) = 10$.
+  With $5$ rubies and $5$ ore, the Blacksmithing Parlor produces $10$ gold
+  ($1$ ruby $+ 1$ ore $\to 2$ gold $+ 1$ food per activation).
+\end{theorem}
+
+\begin{proof}\leanok $\min(5,5) \times 2 = 10$.\end{proof}
+
+\section{Writing Chamber}
+
+\begin{theorem}[Writing Chamber caps at 7]
+  \label{thm:writing_cap}
+  \lean{Caverna.writing_chamber_caps_at_seven, Caverna.writing_chamber_extreme, Caverna.writing_chamber_practical}
+  \leanok
+  The Writing Chamber prevents up to $7$ gold points of negative
+  scoring, regardless of how many penalties exist.
+  $\text{writingChamberReduction}(24) = 7$,
+  $\text{writingChamberReduction}(57) = 7$,
+  $\text{writingChamberReduction}(8) = 7$.
+\end{theorem}
+
+\begin{proof}\leanok The reduction is capped at $7$ by definition.\end{proof}
+
+\section{Dog-sheep stacking}
+
+\begin{theorem}[Dog-sheep scaling]
+  \label{thm:dog_scaling}
+  \lean{Caverna.dog_sheep_scaling, Caverna.dog_sheep_10_dogs}
+  \leanok
+  \uses{def:dog_sheep}
+  $\text{dogSheepCapacity}(n) = n + 1$ and
+  $\text{dogSheepCapacity}(10) = 11$.
+  Even $10$ dogs only house $11$ sheep, making this a weak
+  scaling path compared to stabled pastures.
+\end{theorem}
+
+\begin{proof}\leanok Direct from $f(n) = n+1$.\end{proof}
+
+\section{Breeding and mining output}
+
+\begin{theorem}[Breeding Cave food output]
+  \label{thm:breeding_output}
+  \lean{Caverna.breeding_cave_food_output}
+  \leanok
+  Over $7$ harvest phases with breeding, total food output is $35$.
+\end{theorem}
+
+\begin{proof}\leanok $7 \times 5 = 35$.\end{proof}
+
+\begin{theorem}[Miner ore output]
+  \label{thm:miner_ore}
+  \lean{Caverna.miner_ore_output, Caverna.ore_trading_max_per_use}
+  \leanok
+  A Miner produces $10$ ore over $5$ activations ($2$ per activation).
+  Ore trading yields at most $6$ per use ($3 \times 2$).
+\end{theorem}
+
+\begin{proof}\leanok $2 \times 5 = 10$ and $3 \times 2 = 6$.\end{proof}
+
+\section{Combined exploits}
+
+\begin{theorem}[Triple parlor conversion]
+  \label{thm:triple_parlor}
+  \lean{Caverna.triple_parlor_conversion}
+  \leanok
+  \uses{thm:beer_max, thm:blacksmith_scales}
+  The theoretical maximum from combining Beer Parlor, Blacksmithing
+  Parlor, and Hunting Parlor is $30 + 10 + 20 = 60$ gold.
+  This is a ceiling, not an achievable value, because the required
+  input resources (grain, rubies, ore, boar) compete for action tempo.
+\end{theorem}
+
+\begin{proof}\leanok By addition of individual ceilings.\end{proof}
+
+\begin{theorem}[Action budget constraint]
+  \label{thm:action_budget}
+  \lean{Caverna.action_budget_constraint}
+  \leanok
+  \uses{thm:growth_placements}
+  With one growth at round~4, total placements are $47$.
+  This finite action budget prevents any exploit from running unbounded.
+\end{theorem}
+
+\begin{proof}\leanok $\text{totalPlacementsOneGrowthRound4} = 47$.\end{proof}
+
+\begin{theorem}[Weapon snowball bound]
+  \label{thm:snowball}
+  \lean{Caverna.all_weapons_snowball}
+  \leanok
+  Arming $3$ dwarfs at strength $4$ each costs $3 \times 4 = 12$ ore.
+  The ore investment caps the weapon snowball effect.
+\end{theorem}
+
+\begin{proof}\leanok $3 \times 4 = 12$.\end{proof}
+
+\begin{theorem}[Expedition loot bounds]
+  \label{thm:loot_bounds}
+  \lean{Caverna.furnish_cavern_loot_value, Caverna.max_loot_at_strength_14}
+  \leanok
+  \uses{def:loot}
+  The ``furnish cavern'' loot option is worth $\sim 4$ points.
+  At maximum strength $14$, total available loot value is $\sim 13$ points.
+  Expeditions are valuable but capped.
+\end{theorem}
+
+\begin{proof}\leanok By enumeration of loot items and their point values.\end{proof}

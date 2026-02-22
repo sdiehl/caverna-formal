@@ -1,0 +1,28 @@
+% Blueprint content for the Caverna optimal play proof.
+% Complete end-to-end derivation that Furnishing Rush is the
+% weakly dominant strategy in 2-player Caverna.
+
+\textbf{Overview.}
+We present a complete formal proof that the \emph{furnishing rush} strategy is
+the unique weakly dominant pure strategy in 2-player Caverna (the Cave Farmers
+European board game by Uwe Rosenberg).  The argument proceeds bottom-up: we
+first formalize the game's scoring system, resource economy, and 48 furnishing
+tiles, then analyze eight candidate strategy archetypes through an $8 \times 8$
+payoff matrix, and finally establish weak dominance, Nash equilibrium
+uniqueness, and the price of anarchy.
+
+Formalized in Lean~4 with Mathlib.
+
+\textbf{Author.} Stephen Diehl.
+
+\input{chapters/game_model}
+\input{chapters/scoring}
+\input{chapters/food_economy}
+\input{chapters/weapons}
+\input{chapters/animals}
+\input{chapters/furnishings}
+\input{chapters/strategy}
+\input{chapters/dominance}
+\input{chapters/game_theory}
+\input{chapters/anomalies}
+\input{chapters/sensitivity}

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Optimal Play in Caverna</title>
+<style>
+  :root { --bg: #fafafa; --fg: #222; --accent: #1a6b4a; --muted: #666; --border: #ddd; --code-bg: #f0f0f0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+         color: var(--fg); background: var(--bg); line-height: 1.6; }
+  .container { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem; }
+  h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.2rem; margin-top: 2rem; margin-bottom: 0.5rem; color: var(--accent); }
+  p { margin-bottom: 1rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
+         font-size: 0.9em; background: var(--code-bg); padding: 0.15em 0.35em; border-radius: 3px; }
+  .links { display: flex; gap: 1.5rem; margin: 1.5rem 0; flex-wrap: wrap; }
+  .links a { display: inline-block; padding: 0.5rem 1.2rem; border: 1px solid var(--accent);
+             border-radius: 4px; font-weight: 500; }
+  .links a:hover { background: var(--accent); color: #fff; text-decoration: none; }
+  .theorem { border-left: 3px solid var(--accent); padding: 0.75rem 1rem; margin: 1rem 0;
+             background: #f5faf7; }
+  .theorem strong { display: block; margin-bottom: 0.25rem; }
+  ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  ol li { margin-bottom: 0.25rem; }
+  ol li strong { font-weight: 600; }
+  table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+  th, td { text-align: left; padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  td:last-child { font-family: "SF Mono", "Fira Code", monospace; font-size: 0.9em; }
+  .footer { margin-top: 3rem; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Optimal Play in Caverna</h1>
+<p>A formal proof that the <strong>furnishing rush</strong> strategy is the unique weakly
+dominant pure strategy in 2-player Caverna (the board game by Uwe Rosenberg),
+verified in <a href="https://lean-lang.org/">Lean 4</a> with
+<a href="https://leanprover-community.github.io/mathlib4_docs/">Mathlib</a>.</p>
+
+<div class="links">
+  <a href="blueprint/">Blueprint</a>
+  <a href="https://github.com/sdiehl/caverna-formal">Source Code</a>
+</div>
+
+<div class="theorem">
+  <strong>Core Theorem (Weak Dominance).</strong>
+  For all opponents and all alternative strategies, the furnishing rush payoff
+  is at least as large, and strictly larger for at least one opponent. The unique
+  pure Nash equilibrium is the furnishing rush mirror match.
+</div>
+
+<p>The formalization is <strong>complete</strong></p>
+
+<div class="footer">
+  <a href="https://github.com/sdiehl/caverna-formal">github.com/sdiehl/caverna-formal</a>
+</div>
+
+</div>
+</body>
+</html>

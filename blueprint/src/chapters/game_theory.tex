@@ -1,0 +1,464 @@
+\chapter{Payoff Matrix and Nash Equilibrium}
+\label{chap:game_theory}
+
+This chapter contains the main results.  We construct an $8 \times 8$
+payoff matrix from the strategy archetypes, prove that $\FurnRush{}$ is
+the unique weakly dominant strategy, that $(\FurnRush{},\FurnRush{})$ is
+the unique pure Nash equilibrium, and quantify the price of anarchy.
+
+\section{Payoff matrix}
+
+\begin{definition}[Payoff matrix]
+  \label{def:payoff_matrix}
+  \lean{Caverna.payoffMatrix, Caverna.StrategyArchetype.toFin, Caverna.StrategyArchetype.ofFin}
+  \leanok
+  \uses{def:archetypes, def:score_estimates}
+  The payoff matrix $M : \text{Fin}\,8 \to \text{Fin}\,8 \to \N$
+  assigns $\payoff{i}{j}$ as the expected score of archetype $i$
+  when the opponent plays archetype $j$.  Entries are derived from
+  score estimates adjusted for contention and synergy effects.
+  The matrix is indexed via $\text{toFin}$ and $\text{ofFin}$
+  conversions between $\text{StrategyArchetype}$ and $\text{Fin}\,8$.
+\end{definition}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  cell/.style={minimum width=1.15cm, minimum height=0.75cm, inner sep=0pt,
+               font=\small\bfseries, text=textDark},
+  hdr/.style={cell, font=\small\itshape, fill=pastelSlate, text=textDark},
+]
+% Column headers (opponent)
+\node[hdr] at (0, 0.75) {\rotatebox{55}{\scriptsize Opponent}};
+\foreach \j/\name in {1/FR, 2/WR, 3/AH, 4/MH, 5/Bal, 6/PF, 7/RE, 8/PC} {
+  \node[hdr] at (\j*1.15, 0.75) {\name};
+}
+% Row headers + cells
+% Row 0: FurnRush  85 130 135 130 125 135 135 130
+\node[hdr] at (0, 0) {FR};
+\node[cell, fill=heatMid]     at (1*1.15, 0) {85};
+\node[cell, fill=heatHigh]    at (2*1.15, 0) {130};
+\node[cell, fill=heatHigh]    at (3*1.15, 0) {135};
+\node[cell, fill=heatHigh]    at (4*1.15, 0) {130};
+\node[cell, fill=heatHigh]    at (5*1.15, 0) {125};
+\node[cell, fill=heatHigh]    at (6*1.15, 0) {135};
+\node[cell, fill=heatHigh]    at (7*1.15, 0) {135};
+\node[cell, fill=heatHigh]    at (8*1.15, 0) {130};
+% Row 1: WeapRush  80  75 100  85  95 105 100  85
+\node[hdr] at (0, -0.75) {WR};
+\node[cell, fill=heatMid]     at (1*1.15, -0.75) {80};
+\node[cell, fill=heatMidLow]  at (2*1.15, -0.75) {75};
+\node[cell, fill=heatMidHigh] at (3*1.15, -0.75) {100};
+\node[cell, fill=heatMid]     at (4*1.15, -0.75) {85};
+\node[cell, fill=heatMidHigh] at (5*1.15, -0.75) {95};
+\node[cell, fill=heatMidHigh] at (6*1.15, -0.75) {105};
+\node[cell, fill=heatMidHigh] at (7*1.15, -0.75) {100};
+\node[cell, fill=heatMid]     at (8*1.15, -0.75) {85};
+% Row 2: AnimHusb  75 100  70 100  95 105 100 100
+\node[hdr] at (0, -1.5) {AH};
+\node[cell, fill=heatMidLow]  at (1*1.15, -1.5) {75};
+\node[cell, fill=heatMidHigh] at (2*1.15, -1.5) {100};
+\node[cell, fill=heatMidLow]  at (3*1.15, -1.5) {70};
+\node[cell, fill=heatMidHigh] at (4*1.15, -1.5) {100};
+\node[cell, fill=heatMidHigh] at (5*1.15, -1.5) {95};
+\node[cell, fill=heatMidHigh] at (6*1.15, -1.5) {105};
+\node[cell, fill=heatMidHigh] at (7*1.15, -1.5) {100};
+\node[cell, fill=heatMidHigh] at (8*1.15, -1.5) {100};
+% Row 3: MineHeavy  75  85  95  65  90 100  95  85
+\node[hdr] at (0, -2.25) {MH};
+\node[cell, fill=heatMidLow]  at (1*1.15, -2.25) {75};
+\node[cell, fill=heatMid]     at (2*1.15, -2.25) {85};
+\node[cell, fill=heatMidHigh] at (3*1.15, -2.25) {95};
+\node[cell, fill=heatLow]     at (4*1.15, -2.25) {65};
+\node[cell, fill=heatMid]     at (5*1.15, -2.25) {90};
+\node[cell, fill=heatMidHigh] at (6*1.15, -2.25) {100};
+\node[cell, fill=heatMidHigh] at (7*1.15, -2.25) {95};
+\node[cell, fill=heatMid]     at (8*1.15, -2.25) {85};
+% Row 4: Balanced  70  85  85  85  70  90  85  85
+\node[hdr] at (0, -3.0) {Bal};
+\node[cell, fill=heatMidLow]  at (1*1.15, -3.0) {70};
+\node[cell, fill=heatMid]     at (2*1.15, -3.0) {85};
+\node[cell, fill=heatMid]     at (3*1.15, -3.0) {85};
+\node[cell, fill=heatMid]     at (4*1.15, -3.0) {85};
+\node[cell, fill=heatMidLow]  at (5*1.15, -3.0) {70};
+\node[cell, fill=heatMid]     at (6*1.15, -3.0) {90};
+\node[cell, fill=heatMid]     at (7*1.15, -3.0) {85};
+\node[cell, fill=heatMid]     at (8*1.15, -3.0) {85};
+% Row 5: PeaceFarm  65  75  75  80  75  60  80  75
+\node[hdr] at (0, -3.75) {PF};
+\node[cell, fill=heatLow]     at (1*1.15, -3.75) {65};
+\node[cell, fill=heatMidLow]  at (2*1.15, -3.75) {75};
+\node[cell, fill=heatMidLow]  at (3*1.15, -3.75) {75};
+\node[cell, fill=heatMid]     at (4*1.15, -3.75) {80};
+\node[cell, fill=heatMidLow]  at (5*1.15, -3.75) {75};
+\node[cell, fill=heatLow]     at (6*1.15, -3.75) {60};
+\node[cell, fill=heatMid]     at (7*1.15, -3.75) {80};
+\node[cell, fill=heatMidLow]  at (8*1.15, -3.75) {75};
+% Row 6: RubyEcon  65  75  75  75  70  80  55  75
+\node[hdr] at (0, -4.5) {RE};
+\node[cell, fill=heatLow]     at (1*1.15, -4.5) {65};
+\node[cell, fill=heatMidLow]  at (2*1.15, -4.5) {75};
+\node[cell, fill=heatMidLow]  at (3*1.15, -4.5) {75};
+\node[cell, fill=heatMidLow]  at (4*1.15, -4.5) {75};
+\node[cell, fill=heatMidLow]  at (5*1.15, -4.5) {70};
+\node[cell, fill=heatMid]     at (6*1.15, -4.5) {80};
+\node[cell, fill=heatLow]     at (7*1.15, -4.5) {55};
+\node[cell, fill=heatMidLow]  at (8*1.15, -4.5) {75};
+% Row 7: PeaceCave  70  80  80  85  80  85  80  60
+\node[hdr] at (0, -5.25) {PC};
+\node[cell, fill=heatMidLow]  at (1*1.15, -5.25) {70};
+\node[cell, fill=heatMid]     at (2*1.15, -5.25) {80};
+\node[cell, fill=heatMid]     at (3*1.15, -5.25) {80};
+\node[cell, fill=heatMid]     at (4*1.15, -5.25) {85};
+\node[cell, fill=heatMid]     at (5*1.15, -5.25) {80};
+\node[cell, fill=heatMid]     at (6*1.15, -5.25) {85};
+\node[cell, fill=heatMid]     at (7*1.15, -5.25) {80};
+\node[cell, fill=heatLow]     at (8*1.15, -5.25) {60};
+% Highlight: diagonal cells get a thicker border
+\foreach \i in {0,...,7} {
+  \draw[accentBlue, thick] (\i*1.15+1.15-0.575, -\i*0.75-0.375) rectangle ++(1.15, 0.75);
+}
+% Highlight: FurnRush row bracket
+\draw[accentGreen, ultra thick, rounded corners=2pt]
+  (1*1.15-0.575, 0.375) rectangle (8*1.15+0.575, -0.375);
+% Nash cell marker
+\node[anchor=south, font=\tiny\itshape, text=accentGreen] at (1*1.15, 0.4) {Nash};
+% Labels
+\node[font=\small, text=textDark, rotate=90, anchor=south] at (-0.7, -2.25) {Row player};
+\end{tikzpicture}
+\caption{The $8 \times 8$ payoff matrix.  Green border marks the \FurnRush{} row
+(weakly dominant).  Blue borders highlight the diagonal (mirror matchups, always
+depressed).  Cell colour intensity reflects payoff magnitude: light green ($55$)
+to coral ($135$).}
+\label{fig:payoff_matrix}
+\end{figure}
+
+\begin{definition}[Row sum]
+  \label{def:row_sum}
+  \lean{Caverna.rowSum}
+  \leanok
+  \uses{def:payoff_matrix}
+  $\rowsum{s} = \sum_{j=0}^{7} \payoff{\text{toFin}(s)}{j}$,
+  the total payoff of strategy $s$ summed across all opponent choices.
+\end{definition}
+
+\begin{definition}[Best response]
+  \label{def:best_response}
+  \lean{Caverna.bestResponse, Caverna.colMax}
+  \leanok
+  \uses{def:payoff_matrix}
+  $\text{bestResponse}(s)$ is the strategy $t$ that maximizes
+  $\payoff{\text{toFin}(t)}{\text{toFin}(s)}$, i.e.\ the best reply
+  to an opponent playing $s$.
+\end{definition}
+
+\begin{definition}[Nash equilibrium]
+  \label{def:nash}
+  \lean{Caverna.isNashEquilibrium}
+  \leanok
+  \uses{def:payoff_matrix}
+  A pair $(a, b)$ is a Nash equilibrium if neither player can
+  unilaterally improve: $a = \text{bestResponse}(b)$ and
+  $b = \text{bestResponse}(a)$.
+\end{definition}
+
+\begin{definition}[Social welfare]
+  \label{def:social_welfare}
+  \lean{Caverna.socialWelfare, Caverna.nashWelfare, Caverna.socialOptimumValue}
+  \leanok
+  \uses{def:payoff_matrix}
+  $\text{socialWelfare}(a,b) = \payoff{\text{toFin}(a)}{\text{toFin}(b)}
+  + \payoff{\text{toFin}(b)}{\text{toFin}(a)}$.
+  The Nash welfare is $\text{socialWelfare}(\FurnRush{},\FurnRush{})$.
+  The social optimum is the maximum social welfare over all pairs.
+\end{definition}
+
+\section{Matrix properties}
+
+\begin{theorem}[All payoffs positive]
+  \label{thm:all_positive}
+  \lean{Caverna.all_payoffs_positive}
+  \leanok
+  \uses{def:payoff_matrix}
+  $\forall\, i\,j,\; \payoff{i}{j} > 0$.
+\end{theorem}
+
+\begin{proof}\leanok By checking all $64$ entries.\end{proof}
+
+\begin{theorem}[Minimum payoff is 55]
+  \label{thm:min_payoff}
+  \lean{Caverna.min_payoff_is_55}
+  \leanok
+  \uses{def:payoff_matrix}
+  $\forall\, i\,j,\; \payoff{i}{j} \ge 55$, and $\payoff{6}{6} = 55$.
+  The worst outcome is a $\PeaceCave{}$ mirror match.
+\end{theorem}
+
+\begin{proof}\leanok By exhaustive check of all $64$ entries.\end{proof}
+
+\begin{theorem}[Maximum payoff is 135]
+  \label{thm:max_payoff}
+  \lean{Caverna.max_payoff_is_135}
+  \leanok
+  \uses{def:payoff_matrix}
+  $\forall\, i\,j,\; \payoff{i}{j} \le 135$, and $\payoff{0}{2} = 135$.
+  The best outcome is $\FurnRush{}$ against $\PeaceFarm{}$.
+\end{theorem}
+
+\begin{proof}\leanok By exhaustive check.\end{proof}
+
+\begin{theorem}[Diagonal is always depressed]
+  \label{thm:diagonal_depressed}
+  \lean{Caverna.diagonal_always_depressed}
+  \leanok
+  \uses{def:payoff_matrix}
+  For every strategy $i$, there exists an opponent $j \ne i$ such that
+  $\payoff{i}{j} > \payoff{i}{i}$.  Mirror matchups are never optimal.
+\end{theorem}
+
+\begin{proof}\leanok By exhibiting a witness $j$ for each $i$.\end{proof}
+
+\section{Weak dominance}
+
+\begin{theorem}[Furnishing rush is weakly dominant]
+  \label{thm:weakly_dominant}
+  \lean{Caverna.furnishing_rush_weakly_dominant}
+  \leanok
+  \uses{def:payoff_matrix, def:archetypes}
+  For all opponents $j$ and all alternative strategies $s$,
+  $$\payoff{0}{j} \ge \payoff{\text{toFin}(s)}{j}.$$
+  That is, $\FurnRush{}$ (row $0$) weakly dominates every other row.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  \uses{thm:all_positive, thm:max_payoff}
+  By checking all $8 \times 8 = 64$ pairwise comparisons in the matrix.
+  For each column $j$ and each alternative row $s$, the $\FurnRush{}$
+  entry is $\ge$ the alternative entry.
+\end{proof}
+
+\begin{theorem}[Strict improvement exists]
+  \label{thm:strict_somewhere}
+  \lean{Caverna.furnishing_rush_strictly_better_somewhere}
+  \leanok
+  \uses{thm:weakly_dominant}
+  For every $s \ne \FurnRush{}$, there exists an opponent $j$
+  where $\payoff{0}{j} > \payoff{\text{toFin}(s)}{j}$.
+  The dominance is therefore \emph{weak} (not just tied everywhere).
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  By exhibiting an explicit witness column for each of the $7$
+  non-$\FurnRush{}$ strategies.
+\end{proof}
+
+\begin{theorem}[Best response is always furnishing rush]
+  \label{thm:best_response_always}
+  \lean{Caverna.universal_best_response, Caverna.best_response_correct}
+  \leanok
+  \uses{def:best_response, thm:weakly_dominant}
+  $\forall\,s,\; \text{bestResponse}(s) = \FurnRush{}$.
+  No matter what the opponent does, $\FurnRush{}$ is the best reply.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  \uses{thm:weakly_dominant}
+  Since $\FurnRush{}$ weakly dominates all alternatives, it maximizes
+  the payoff in every column.
+\end{proof}
+
+\section{Nash equilibrium}
+
+\begin{theorem}[Furnishing mirror is Nash]
+  \label{thm:nash_exists}
+  \lean{Caverna.furnishing_mirror_is_nash}
+  \leanok
+  \uses{def:nash, thm:best_response_always}
+  $\text{isNashEquilibrium}(\FurnRush{}, \FurnRush{})$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  \uses{thm:best_response_always}
+  Both players are playing their best response ($\FurnRush{}$) to the
+  other's strategy ($\FurnRush{}$).
+\end{proof}
+
+\begin{theorem}[Unique Nash equilibrium]
+  \label{thm:nash_unique}
+  \lean{Caverna.furnishing_mirror_unique_nash, Caverna.exactly_one_nash_equilibrium}
+  \leanok
+  \uses{thm:nash_exists, thm:best_response_always}
+  $(\FurnRush{}, \FurnRush{})$ is the \emph{unique} pure Nash equilibrium.
+  If $(a, b)$ is any Nash equilibrium, then $a = b = \FurnRush{}$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  \uses{thm:best_response_always}
+  In any Nash equilibrium $(a,b)$, we need $a = \text{bestResponse}(b)
+  = \FurnRush{}$ and $b = \text{bestResponse}(a) = \FurnRush{}$.
+\end{proof}
+
+\section{Row sum analysis}
+
+\begin{theorem}[Row sum ordering]
+  \label{thm:row_ordering}
+  \lean{Caverna.row_sum_ordering, Caverna.furnishing_rush_row_sum_value, Caverna.ruby_economy_row_sum_value}
+  \leanok
+  \uses{def:row_sum}
+  The row sums satisfy the strict ordering:
+  $$\rowsum{\FurnRush{}} = 1005 > \rowsum{\AnimHusb{}} > \cdots > \rowsum{\RubyEcon{}} = 570.$$
+  $\FurnRush{}$ has the highest aggregate payoff; $\RubyEcon{}$ the lowest.
+\end{theorem}
+
+\begin{proof}\leanok By computing all $8$ row sums and comparing.\end{proof}
+
+\begin{theorem}[Furnishing rush highest row sum]
+  \label{thm:furn_highest_row}
+  \lean{Caverna.furnishing_rush_highest_row_sum}
+  \leanok
+  \uses{def:row_sum}
+  $\forall\,s,\; \rowsum{\FurnRush{}} \ge \rowsum{s}$.
+\end{theorem}
+
+\begin{proof}\leanok Direct from the row sum ordering.\end{proof}
+
+\begin{theorem}[Total game value]
+  \label{thm:total_game}
+  \lean{Caverna.total_game_value, Caverna.average_payoff_bound}
+  \leanok
+  \uses{def:row_sum}
+  The sum of all row sums is $5595$.
+  The average payoff per cell is $5595 / 64 = 87$.
+\end{theorem}
+
+\begin{proof}\leanok By computation.\end{proof}
+
+\section{Price of anarchy}
+
+\begin{theorem}[Nash welfare]
+  \label{thm:nash_welfare}
+  \lean{Caverna.nash_welfare_value}
+  \leanok
+  \uses{def:social_welfare, thm:nash_exists}
+  $\text{nashWelfare} = 170$ (both players score $85$ in the mirror).
+\end{theorem}
+
+\begin{proof}\leanok $\payoff{0}{0} + \payoff{0}{0} = 85 + 85 = 170$.\end{proof}
+
+\begin{theorem}[Social optimum]
+  \label{thm:social_optimum}
+  \lean{Caverna.social_optimum_candidate, Caverna.social_optimum_dominates_furn_pairs}
+  \leanok
+  \uses{def:social_welfare}
+  $\text{socialOptimumValue} = 210$, achieved by pairing strategies
+  that avoid contention.
+\end{theorem}
+
+\begin{proof}\leanok By checking all $64$ social welfare values.\end{proof}
+
+\begin{theorem}[Price of anarchy]
+  \label{thm:price_of_anarchy}
+  \lean{Caverna.price_of_anarchy_gap, Caverna.price_of_anarchy_ratio}
+  \leanok
+  \uses{thm:nash_welfare, thm:social_optimum}
+  $\text{socialOptimumValue} > \text{nashWelfare}$: i.e., $210 > 170$.
+  The price of anarchy ratio is $21/17 \approx 1.24$.
+  Rational play sacrifices $\sim 19\%$ of social welfare.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  \uses{thm:nash_welfare, thm:social_optimum}
+  $210 > 170$ and $210 \times 17 = 3570 = 170 \times 21$.
+\end{proof}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  bar/.style={rounded corners=3pt, minimum width=1.6cm, anchor=south west,
+              font=\small\bfseries, text=textDark, inner sep=0pt},
+]
+% Axes
+\draw[thick, ->, color=textDark] (0,0) -- (5,0);
+\draw[thick, ->, color=textDark] (0,0) -- (0,4.8);
+\node[font=\footnotesize, text=textDark, anchor=east] at (-0.1, 4.5) {welfare};
+% Nash bar
+\fill[pastelSky, rounded corners=3pt] (0.8, 0) rectangle (2.4, 3.4);
+\node[font=\small\bfseries, text=textDark] at (1.6, 1.7) {170};
+\node[font=\footnotesize, text=textDark, anchor=north] at (1.6, -0.15) {Nash};
+% Social optimum bar
+\fill[pastelMint, rounded corners=3pt] (2.8, 0) rectangle (4.4, 4.2);
+\node[font=\small\bfseries, text=textDark] at (3.6, 2.1) {210};
+\node[font=\footnotesize, text=textDark, anchor=north] at (3.6, -0.15) {Social opt.};
+% Gap annotation
+\draw[accentAmber, thick, <->] (4.6, 3.4) -- (4.6, 4.2);
+\node[font=\scriptsize, text=accentAmber, anchor=west] at (4.7, 3.8) {$\Delta = 40$};
+% Ratio
+\node[font=\scriptsize, text=textDark, anchor=west] at (4.7, 3.3) {PoA $= 21/17$};
+\node[font=\scriptsize, text=textDark, anchor=west] at (4.7, 2.9) {$\approx 19\%$ loss};
+% Gridlines
+\foreach \y/\v in {1.0/50, 2.0/100, 3.0/150, 4.0/200} {
+  \draw[pastelSlate, thin, dashed] (0.4, \y) -- (4.6, \y);
+  \node[font=\tiny, text=textDark, anchor=east] at (0.35, \y) {\v};
+}
+\end{tikzpicture}
+\caption{Nash welfare ($170$) vs.\ social optimum ($210$).  Rational play
+sacrifices $19\%$ of total welfare, yielding a price of anarchy of $21/17$.}
+\label{fig:welfare_comparison}
+\end{figure}
+
+\section{Contention penalties}
+
+\begin{theorem}[Furnishing contention penalty]
+  \label{thm:furn_contention}
+  \lean{Caverna.furnishing_contention_penalty}
+  \leanok
+  \uses{def:payoff_matrix}
+  $\payoff{0}{0} = 85$, $\payoff{0}{1} = 130$, $\payoff{0}{2} = 135$.
+  The $\FurnRush{}$ mirror ($85$) is the worst $\FurnRush{}$ outcome,
+  showing the contention cost of both players racing for the same furnishings.
+\end{theorem}
+
+\begin{proof}\leanok By reading matrix entries.\end{proof}
+
+\begin{theorem}[Asymmetry bounds]
+  \label{thm:asymmetry}
+  \lean{Caverna.max_asymmetry, Caverna.non_furnishing_symmetry}
+  \leanok
+  \uses{def:payoff_matrix}
+  The maximum payoff asymmetry is $70$:
+  $\forall\,i\,j,\; |\payoff{i}{j} - \payoff{j}{i}| \le 70$.
+  Among non-$\FurnRush{}$ pairs, asymmetry is at most $35$.
+\end{theorem}
+
+\begin{proof}\leanok By checking all off-diagonal pairs.\end{proof}
+
+\section{Score bounds from dominance}
+
+\begin{theorem}[Dominant strategy safety margin]
+  \label{thm:safety_margin}
+  \lean{Caverna.dominant_strategy_safety_margin}
+  \leanok
+  \uses{def:score_bounds, thm:weakly_dominant}
+  $\text{practicalFloor} - \text{doNothingScore} = 115$.
+  Even in the worst case, $\FurnRush{}$ scores $115$ points above
+  the do-nothing catastrophe.
+\end{theorem}
+
+\begin{proof}\leanok $60 - (-55) = 115$.\end{proof}
+
+\begin{theorem}[Dominant strategy variance]
+  \label{thm:variance}
+  \lean{Caverna.dominant_strategy_variance}
+  \leanok
+  \uses{def:score_bounds}
+  $\text{practicalCeiling} - \text{practicalFloor} = 80$.
+  The score range of $\FurnRush{}$ spans $80$ points depending on matchup.
+\end{theorem}
+
+\begin{proof}\leanok $140 - 60 = 80$.\end{proof}

@@ -1,0 +1,80 @@
+\chapter{Animal Husbandry}
+
+Animals contribute to scoring (Chapter~\ref{def:score_animals}) and food
+(Chapter~\ref{def:animal_food}).  Housing animals requires infrastructure:
+pastures, stables, and dogs.
+
+\section{Capacity system}
+
+\begin{definition}[Pasture and stable capacity]
+  \label{def:pasture_capacity}
+  \lean{Caverna.smallPastureCapacity, Caverna.largePastureCapacity, Caverna.smallPastureStableCapacity, Caverna.largePastureOneStableCapacity, Caverna.largePastureTwoStableCapacity}
+  \leanok
+  A small pasture holds $2$ animals; a large pasture holds $4$.
+  Each stable doubles the capacity of its pasture.
+  A large pasture with two stables holds $16$ animals.
+\end{definition}
+
+\begin{definition}[Dog-sheep capacity]
+  \label{def:dog_sheep}
+  \lean{Caverna.dogSheepCapacity}
+  \leanok
+  Dogs act as sheepdogs: $n$ dogs allow housing $n+1$ sheep
+  in living spaces (no pasture needed).
+\end{definition}
+
+\begin{theorem}[Stable doubles capacity]
+  \label{thm:stable_doubles}
+  \lean{Caverna.stable_doubles_small_pasture, Caverna.stable_doubles_large_pasture}
+  \leanok
+  \uses{def:pasture_capacity}
+  A stable doubles small pasture capacity ($2 \to 4$) and
+  large pasture capacity ($4 \to 8$).
+\end{theorem}
+
+\begin{proof}\leanok By computation.\end{proof}
+
+\begin{theorem}[Two stables quadruple large pasture]
+  \label{thm:two_stables}
+  \lean{Caverna.two_stables_quadruple_large_pasture, Caverna.max_single_space_capacity}
+  \leanok
+  \uses{def:pasture_capacity}
+  A large pasture with two stables holds $4 \times 4 = 16$ animals,
+  the maximum single-space animal capacity.
+\end{theorem}
+
+\begin{proof}\leanok $\text{largePastureTwoStableCapacity} = 16 = 4 \times \text{largePastureCapacity}$.\end{proof}
+
+\begin{theorem}[Dog-sheep linear scaling]
+  \label{thm:dog_sheep_scale}
+  \lean{Caverna.one_dog_two_sheep, Caverna.three_dogs_four_sheep, Caverna.dog_sheep_monotone}
+  \leanok
+  \uses{def:dog_sheep}
+  $\text{dogSheepCapacity}(1) = 2$, $\text{dogSheepCapacity}(3) = 4$,
+  and the function is strictly monotone.
+\end{theorem}
+
+\begin{proof}\leanok Direct from $f(n) = n + 1$.\end{proof}
+
+\begin{theorem}[Dogs worse than stabled large pasture]
+  \label{thm:dogs_worse}
+  \lean{Caverna.dogs_worse_than_stabled_large_pasture}
+  \leanok
+  \uses{def:dog_sheep, def:pasture_capacity}
+  For $n < 15$, $\text{dogSheepCapacity}(n) < 16$.
+  Dogs are inferior to a fully stabled large pasture for mass
+  animal housing.
+\end{theorem}
+
+\begin{proof}\leanok $n + 1 < 16$ for $n < 15$.\end{proof}
+
+\begin{theorem}[Dog breakeven]
+  \label{thm:dog_breakeven}
+  \lean{Caverna.dog_breakeven_small_pasture}
+  \leanok
+  \uses{def:dog_sheep, def:pasture_capacity}
+  $\text{dogSheepCapacity}(1) = \text{smallPastureCapacity} = 2$.
+  One dog matches a small pasture for sheep housing.
+\end{theorem}
+
+\begin{proof}\leanok Both equal $2$.\end{proof}

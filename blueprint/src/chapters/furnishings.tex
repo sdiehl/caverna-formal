@@ -1,0 +1,104 @@
+\chapter{Furnishing Tiles}
+
+Caverna has $48$ unique furnishing tiles organized in $4$ blocks of $12$.
+Furnishings are the primary source of bonus victory points, and their
+synergies drive the dominant strategy.
+All tile data is cross-referenced against the official Caverna appendix.
+
+\section{Tile model}
+
+\begin{definition}[Furnishing specification]
+  \label{def:furnishing_spec}
+  \lean{Caverna.FurnishingId, Caverna.FurnishingCategory, Caverna.FurnishingSpec, Caverna.furnishingSpec}
+  \leanok
+  Each furnishing has: a name, category, resource costs (wood, stone, ore,
+  gold, grain, vegetables, food), base victory points, and a bonus function.
+  Categories are: dwelling, cooking, working, parlor, storage, and special.
+\end{definition}
+
+\begin{definition}[Bonus context]
+  \label{def:bonus_context}
+  \lean{Caverna.BonusContext}
+  \leanok
+  The bonus points of many furnishings depend on game state.
+  We define a $\texttt{BonusContext}$ structure with $14$ named fields:
+  number of dwarfs, armed dwarfs, adjacent dwellings, dogs, sheep, etc.
+  This replaces a 17-positional-argument function signature.
+\end{definition}
+
+\begin{definition}[Bonus point function]
+  \label{def:bonus_points}
+  \lean{Caverna.furnishingBonusPoints}
+  \leanok
+  \uses{def:furnishing_spec, def:bonus_context}
+  Each furnishing has a bonus function
+  $\text{furnishingBonusPoints} : \text{FurnishingId} \to \text{BonusContext} \to \N$
+  that computes conditional bonus points based on game state.
+\end{definition}
+
+\begin{definition}[Tile count]
+  \label{def:tile_count}
+  \lean{Caverna.numUniqueFurnishings, Caverna.allFurnishingIds}
+  \leanok
+  \uses{def:furnishing_spec}
+  There are $48$ unique furnishing tiles.
+\end{definition}
+
+\section{Key furnishing properties}
+
+\begin{theorem}[State Parlor scales with dwellings]
+  \label{thm:state_parlor}
+  \lean{Caverna.state_parlor_scales_with_dwellings}
+  \leanok
+  \uses{def:bonus_points}
+  $\text{furnishingBonusPoints}(\text{stateParlor}, \{
+  \text{numAdjacentDwellings} := 4\}) = 16$.
+\end{theorem}
+
+\begin{proof}\leanok State Parlor gives $4$ points per adjacent dwelling.\end{proof}
+
+\begin{theorem}[Broom Chamber scales with dwarfs]
+  \label{thm:broom_chamber}
+  \lean{Caverna.broom_chamber_scales_with_dwarfs}
+  \leanok
+  \uses{def:bonus_points}
+  $\text{furnishingBonusPoints}(\text{broomChamber}, \{
+  \text{numDwarfs} := 5\}) = 5$.
+\end{theorem}
+
+\begin{proof}\leanok Broom Chamber gives $1$ point per dwarf.\end{proof}
+
+\begin{theorem}[Prayer Chamber vs.\ weapons]
+  \label{thm:prayer_chamber}
+  \lean{Caverna.prayer_chamber_vs_weapons}
+  \leanok
+  \uses{def:bonus_points}
+  Prayer Chamber gives $8$ bonus points when no dwarfs have weapons,
+  but $0$ when any dwarf is armed.  This creates a hard choice between
+  the peaceful and weapon-based strategies.
+\end{theorem}
+
+\begin{proof}\leanok By the bonus function definition for Prayer Chamber.\end{proof}
+
+\begin{theorem}[Weapon Storage maximum]
+  \label{thm:weapon_storage_max}
+  \lean{Caverna.weapon_storage_max_value}
+  \leanok
+  \uses{def:bonus_points}
+  $\text{furnishingBonusPoints}(\text{weaponStorage}, \{
+  \text{numArmedDwarfs} := 5\}) = 15$.
+  (Weapon Storage gives $+3$ per armed dwarf.)
+\end{theorem}
+
+\begin{proof}\leanok $3 \times 5 = 15$.\end{proof}
+
+\begin{theorem}[Food Chamber value]
+  \label{thm:food_chamber}
+  \lean{Caverna.food_chamber_value}
+  \leanok
+  \uses{def:bonus_points}
+  $\text{furnishingBonusPoints}(\text{foodChamber}, \{
+  \text{grainCount} := 4, \text{vegCount} := 4\}) = 8$.
+\end{theorem}
+
+\begin{proof}\leanok Food Chamber gives $1$ per grain and $1$ per vegetable, capped appropriately.\end{proof}

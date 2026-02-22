@@ -1,0 +1,199 @@
+\chapter{Strategy Archetypes}
+
+We identify $8$ canonical strategy archetypes that span the viable
+play space.  These form the rows and columns of the payoff matrix
+analyzed in subsequent chapters.
+
+\section{Archetype definitions}
+
+\begin{definition}[Strategy archetypes]
+  \label{def:archetypes}
+  \lean{Caverna.StrategyArchetype, Caverna.allStrategies, Caverna.numStrategies}
+  \leanok
+  The $8$ archetypes are:
+  \begin{enumerate}
+    \item \FurnRush{} (furnishing rush): maximize furnishing bonus points.
+    \item \WeapRush{} (weapon rush): forge early, exploit expeditions.
+    \item \PeaceFarm{} (peaceful farming): grain/vegetable engine.
+    \item \MineHeavy{} (mining heavy): ore and ruby mines.
+    \item \AnimHusb{} (animal husbandry): large pastures, breeding.
+    \item \RubyEcon{} (ruby economy): ruby mining and conversion.
+    \item \PeaceCave{} (peaceful cave engine): peaceful interior development.
+    \item \Balanced{} (balanced): diversified portfolio.
+  \end{enumerate}
+\end{definition}
+
+\begin{theorem}[Strategy count]
+  \label{thm:strategy_count}
+  \lean{Caverna.strategy_count}
+  \leanok
+  \uses{def:archetypes}
+  $\text{numStrategies} = 8$.
+\end{theorem}
+
+\begin{proof}\leanok By enumeration of the inductive type.\end{proof}
+
+\section{Score estimates}
+
+\begin{definition}[Score estimate functions]
+  \label{def:score_estimates}
+  \lean{Caverna.maxScoreEstimate, Caverna.minScoreEstimate}
+  \leanok
+  \uses{def:archetypes}
+  For each archetype $s$, we define:
+  \begin{itemize}
+    \item $\text{maxScoreEstimate}(s)$: the ceiling score achievable under favorable matchups.
+    \item $\text{minScoreEstimate}(s)$: the floor score under unfavorable matchups.
+  \end{itemize}
+  These are derived from analysis of board access, contention, and tile synergies.
+\end{definition}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  lbl/.style={font=\footnotesize, text=textDark, anchor=east},
+  val/.style={font=\tiny, text=textDark},
+  bar/.style={rounded corners=2pt},
+]
+% Helper: draw one interval bar.  Args: y-pos, color, label, lo, hi
+\newcommand{\intervalbar}[5]{%
+  \pgfmathsetmacro{\xlo}{(#4 - 40) * 0.08}%
+  \pgfmathsetmacro{\xhi}{(#5 - 40) * 0.08}%
+  \fill[#2, bar] (\xlo, #1 - 0.2) rectangle (\xhi, #1 + 0.2);%
+  \draw[textDark, thin, bar] (\xlo, #1 - 0.2) rectangle (\xhi, #1 + 0.2);%
+  \node[lbl] at (\xlo - 0.15, #1) {#3};%
+  \node[val, anchor=east] at (\xlo - 0.02, #1 + 0.33) {#4};%
+  \node[val, anchor=west] at (\xhi + 0.02, #1 + 0.33) {#5};%
+}
+% Bars (top to bottom, ranked by ceiling)
+\intervalbar{0.0}{pastelMint}{FurnRush}{60}{140}
+\intervalbar{-0.7}{pastelSky}{WeapRush}{60}{120}
+\intervalbar{-1.4}{pastelLavender}{AnimHusb}{50}{115}
+\intervalbar{-2.1}{pastelPeach}{MineHeavy}{55}{110}
+\intervalbar{-2.8}{pastelLemon}{Balanced}{55}{105}
+\intervalbar{-3.5}{pastelRose}{PeaceFarm}{45}{100}
+\intervalbar{-4.2}{pastelSlate}{PeaceCave}{50}{100}
+\intervalbar{-4.9}{pastelCoral}{RubyEcon}{45}{100}
+% X axis
+\draw[thick, textDark] (0, -5.6) -- (8.0, -5.6);
+\foreach \v in {40, 60, 80, 100, 120, 140} {
+  \pgfmathsetmacro{\xp}{(\v - 40) * 0.08}
+  \draw[textDark] (\xp, -5.6) -- (\xp, -5.75);
+  \node[font=\tiny, text=textDark, anchor=north] at (\xp, -5.8) {\v};
+}
+\node[font=\footnotesize, text=textDark] at (4.0, -6.3) {Score};
+\end{tikzpicture}
+\caption{Score estimate ranges for the $8$ strategy archetypes.  Each bar spans
+from the worst-case floor to the best-case ceiling.  \FurnRush{} has the highest
+ceiling ($140$) and ties for the highest floor ($60$).}
+\label{fig:score_intervals}
+\end{figure}
+
+\section{Early game structure}
+
+\begin{theorem}[Round 3 harvest is certain]
+  \label{thm:round3_harvest}
+  \lean{Caverna.round3_harvest_is_certain}
+  \leanok
+  \uses{def:harvest}
+  In the 2-player game, round~3 always triggers a normal harvest.
+\end{theorem}
+
+\begin{proof}\leanok By the harvest schedule definition.\end{proof}
+
+\begin{theorem}[Food crisis shapes all strategies]
+  \label{thm:food_shapes_all}
+  \lean{Caverna.food_crisis_shapes_all_strategies}
+  \leanok
+  \uses{thm:universal_food_crisis, def:archetypes}
+  The feeding cost at the initial dwarf count exceeds the starting food
+  for both players.  This forces every archetype to allocate early actions
+  to food acquisition.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  \uses{thm:universal_food_crisis}
+  Direct consequence of the universal food crisis (Theorem~\ref{thm:universal_food_crisis}).
+\end{proof}
+
+\begin{theorem}[Food spaces are scarce]
+  \label{thm:food_scarce}
+  \lean{Caverna.food_spaces_scarce, Caverna.first_mover_food_advantage}
+  \leanok
+  $\text{numGoodFoodSpaces} = 2$ and $\text{initialDwarfCount} \ge \text{numGoodFoodSpaces}$.
+  The first player to act claims the best food space, giving them a
+  structural advantage.
+\end{theorem}
+
+\begin{proof}\leanok By enumeration of round-1 food-producing action spaces.\end{proof}
+
+\section{Growth and tempo}
+
+\begin{theorem}[Family growth round 4]
+  \label{thm:growth_round4}
+  \lean{Caverna.wish_for_children_round4, Caverna.family_life_round8}
+  \leanok
+  \uses{def:action_spaces}
+  ``Wish for Children'' appears at round~4; ``Family Life'' at round~8.
+  Early growth is available $4$ rounds before the late option.
+\end{theorem}
+
+\begin{proof}\leanok By the action space round assignments.\end{proof}
+
+\begin{theorem}[Growth total placements]
+  \label{thm:growth_placements}
+  \lean{Caverna.growth_total_placements, Caverna.early_growth_beats_late}
+  \leanok
+  Without growth: $44$ total dwarf placements.
+  With one growth at round~4: $47$ placements.
+  With both growths: $56$ placements.
+\end{theorem}
+
+\begin{proof}\leanok By summing dwarf placements across 12 rounds.\end{proof}
+
+\section{Accumulation spaces}
+
+\begin{theorem}[Accumulation is linear]
+  \label{thm:accumulation_linear}
+  \lean{Caverna.accumulation_linear}
+  \leanok
+  $\text{accumulatedValue}(r, n) = r \cdot n$ for accumulation rate $r$
+  and $n$ rounds of waiting.
+\end{theorem}
+
+\begin{proof}\leanok By induction on $n$.\end{proof}
+
+\begin{theorem}[Accumulation patience reward]
+  \label{thm:patience_reward}
+  \lean{Caverna.logging_3round_value, Caverna.accumulation_patience_reward}
+  \leanok
+  \uses{thm:accumulation_linear}
+  Logging yields $9$ wood after $3$ rounds vs.\ $3$ after $1$ round:
+  a $3\times$ payoff for waiting.
+\end{theorem}
+
+\begin{proof}\leanok $\text{accumulatedValue}(3, 3) = 9$ and $9 / 3 = 3$.\end{proof}
+
+\section{Branching factor}
+
+\begin{theorem}[Round 1 branching factor]
+  \label{thm:branching}
+  \lean{Caverna.round1_branching_factor, Caverna.round1_utilization}
+  \leanok
+  \uses{def:action_spaces}
+  Round~1 has $13$ available action spaces with $4$ dwarfs to place.
+  Utilization is $30\%$.
+\end{theorem}
+
+\begin{proof}\leanok $13$ preprinted spaces; $4 \times 100 / 13 = 30$.\end{proof}
+
+\begin{theorem}[Setup variability]
+  \label{thm:setups}
+  \lean{Caverna.total_2p_setups, Caverna.card_orderings, Caverna.harvest_marker_placements}
+  \leanok
+  The 2-player game has $2880$ distinct initial setups:
+  $144$ card orderings times $20$ harvest marker placements.
+\end{theorem}
+
+\begin{proof}\leanok $6 \times 2 \times 2 \times 6 = 144$ and $\binom{6}{3} = 20$; $144 \times 20 = 2880$.\end{proof}

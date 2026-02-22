@@ -1,0 +1,156 @@
+\chapter{Sensitivity Analysis}
+\label{chap:sensitivity}
+
+The point-estimate payoff matrix proves weak dominance conditional on 64
+exact values.  This chapter strengthens the result: we replace each scalar
+entry with a closed interval bounding the true payoff, and prove that
+$\FurnRush{}$ remains weakly dominant for \emph{every} matrix consistent
+with these bounds.
+
+\section{Interval payoff matrix}
+
+\begin{definition}[Payoff interval]
+  \label{def:payoff_interval}
+  \lean{Caverna.PayoffInterval}
+  \leanok
+  A payoff interval $[l, h]$ with $l \le h$ bounds the true payoff
+  for a particular (row, column) matchup.  The point estimate from
+  \texttt{payoffMatrix} satisfies $l \le M_{i,j} \le h$.
+\end{definition}
+
+\begin{definition}[Interval payoff matrix]
+  \label{def:interval_payoff}
+  \lean{Caverna.intervalPayoff}
+  \leanok
+  \uses{def:payoff_interval}
+  The interval payoff matrix assigns a $\text{PayoffInterval}$
+  to each cell.  Error bounds are asymmetric and per-cell:
+  \begin{itemize}
+    \item Mirror matchups (diagonal): $\varepsilon = 2$.
+    \item Cross-archetype matchups: $\varepsilon = 5$.
+    \item Weapon rush vs.\ furnishing rush: $\varepsilon = 3$.
+  \end{itemize}
+\end{definition}
+
+\begin{theorem}[Point estimates contained]
+  \label{thm:point_estimates_contained}
+  \lean{Caverna.point_estimates_contained}
+  \leanok
+  \uses{def:interval_payoff, def:payoff_matrix}
+  For all $i, j$, the point estimate $M_{i,j}$ lies within the
+  interval $[\text{lo}(i,j),\, \text{hi}(i,j)]$.
+\end{theorem}
+
+\section{Robust weak dominance}
+
+\begin{theorem}[Robust weak dominance]
+  \label{thm:robust_weak_dominance}
+  \lean{Caverna.robust_weak_dominance}
+  \leanok
+  \uses{def:interval_payoff}
+  For every column $j$ and every non-furnishing alternative row $i \ne 0$,
+  $$
+    \text{lo}(0, j) \;\ge\; \text{hi}(i, j).
+  $$
+  Equivalently: for any true payoff matrix within the intervals,
+  $\FurnRush{}$ weakly dominates every alternative.
+\end{theorem}
+
+\begin{definition}[Robust margin]
+  \label{def:robust_margin}
+  \lean{Caverna.robustMarginInCol}
+  \leanok
+  \uses{def:interval_payoff}
+  The robust margin in column $j$ is
+  $\text{lo}(0,j) - \max_{i > 0}\,\text{hi}(i,j)$.
+  A non-negative margin implies robust weak dominance in that column.
+\end{definition}
+
+\begin{theorem}[Tightest margin]
+  \label{thm:tightest_robust_margin}
+  \lean{Caverna.tightest_robust_margin}
+  \leanok
+  \uses{def:robust_margin}
+  The tightest robust margin is $0$, occurring in column~$0$
+  (mirror matchup): $\FurnRush{}$ interval $[83, 87]$ meets
+  $\WeapRush{}$ interval $[77, 83]$ at the boundary $83 \ge 83$.
+\end{theorem}
+
+\begin{theorem}[All margins non-negative]
+  \label{thm:all_robust_margins_nonneg}
+  \lean{Caverna.all_robust_margins_nonneg}
+  \leanok
+  \uses{def:robust_margin}
+  Every column has a non-negative robust margin.
+\end{theorem}
+
+\begin{theorem}[Non-mirror robustness]
+  \label{thm:non_mirror_columns_robust}
+  \lean{Caverna.non_mirror_columns_robust}
+  \leanok
+  \uses{def:robust_margin}
+  All columns except the mirror ($j \ne 0$) have a robust margin
+  of at least $20$ points, making them resilient to substantially
+  larger estimation errors.
+\end{theorem}
+
+\section{Robust Nash equilibrium and welfare}
+
+\begin{theorem}[Robust Nash equilibrium]
+  \label{thm:robust_nash}
+  \lean{Caverna.robust_nash_equilibrium}
+  \leanok
+  \uses{thm:robust_weak_dominance}
+  $(\FurnRush{}, \FurnRush{})$ is a Nash equilibrium for every
+  payoff matrix consistent with the interval bounds.
+\end{theorem}
+
+\begin{theorem}[Robust Nash welfare]
+  \label{thm:robust_nash_welfare}
+  \lean{Caverna.robust_nash_welfare_bounds}
+  \leanok
+  \uses{def:interval_payoff}
+  The Nash welfare lies in $[166, 174]$.  The point estimate
+  $170$ is contained in this interval.
+\end{theorem}
+
+\begin{theorem}[Robust social optimum]
+  \label{thm:robust_social_optimum}
+  \lean{Caverna.robust_social_optimum_bounds}
+  \leanok
+  \uses{def:interval_payoff}
+  The social optimum candidate ($\FurnRush{}$ vs.\ $\AnimHusb{}$)
+  has welfare in $[200, 220]$.
+\end{theorem}
+
+\begin{theorem}[Robust price of anarchy]
+  \label{thm:robust_poa}
+  \lean{Caverna.robust_price_of_anarchy}
+  \leanok
+  \uses{thm:robust_nash_welfare, thm:robust_social_optimum}
+  Even in the best case for Nash welfare ($174$) and worst case for the
+  social optimum ($200$), the social optimum exceeds Nash welfare.
+  The price of anarchy is robust: selfish play always costs welfare.
+\end{theorem}
+
+\section{Error bound analysis}
+
+\begin{theorem}[Estimates within bounds]
+  \label{thm:estimates_within_error_bounds}
+  \lean{Caverna.estimates_within_error_bounds}
+  \leanok
+  \uses{def:interval_payoff}
+  Every point estimate differs from its interval boundary by at most
+  $\varepsilon_{\max} = 5$ points.
+\end{theorem}
+
+\begin{theorem}[Column 0 fragility]
+  \label{thm:fragility_column_0}
+  \lean{Caverna.fragility_column_0}
+  \leanok
+  \uses{def:interval_payoff}
+  If all error bounds were widened by $1$, robust dominance would fail
+  in column~$0$ (furnishing rush lower bound $82$ vs.\ weapon rush
+  upper bound $84$).  This precisely quantifies the fragility of the
+  mirror-column result.
+\end{theorem}

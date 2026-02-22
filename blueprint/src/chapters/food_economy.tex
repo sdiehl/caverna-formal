@@ -1,0 +1,194 @@
+\chapter{Food Economy}
+
+Food is the primary constraint in Caverna.  Every harvest, each dwarf
+must be fed $2$ food (plus $1$ per offspring).  Failure to feed produces
+begging markers worth $-3$ points each.  This chapter formalizes the
+food conversion system and proves the universal food crisis that shapes
+all viable strategies.
+
+\section{Food values}
+
+\begin{definition}[Animal food values]
+  \label{def:animal_food}
+  \lean{Caverna.donkeyFoodValue, Caverna.cattleFoodValue, Caverna.wildBoarFoodValue, Caverna.sheepFoodValue}
+  \leanok
+  Sheep convert to $2$ food, wild boar to $3$, cattle to $4$.
+  Donkeys have a superlinear pairing bonus: $1$ donkey gives $1$ food,
+  but pairs give $3$ food (a $+1$ bonus per pair).
+\end{definition}
+
+\begin{theorem}[Donkey pair bonus]
+  \label{thm:donkey_pair}
+  \lean{Caverna.donkey_pair_bonus, Caverna.donkey_superlinear}
+  \leanok
+  \uses{def:animal_food}
+  $\text{donkeyFoodValue}(2) = 3$ and $\text{donkeyFoodValue}(2) > 2 \cdot \text{donkeyFoodValue}(1)$, confirming the superlinear pairing bonus.
+\end{theorem}
+
+\begin{proof}\leanok By computation: $3 > 2 \cdot 1 = 2$.\end{proof}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  res/.style={rounded corners=4pt, minimum width=1.8cm, minimum height=0.7cm,
+              font=\small, text=textDark, draw=textDark, thin, align=center},
+  food/.style={res, fill=pastelMint, font=\small\bfseries, minimum width=2.0cm,
+               minimum height=0.9cm},
+  arr/.style={-{Stealth[length=5pt]}, thick, color=textDark},
+  rate/.style={font=\scriptsize, text=accentTeal, fill=white, inner sep=1.5pt},
+]
+% Food node (center)
+\node[food] (F) at (0, 0) {Food};
+% Source nodes
+\node[res, fill=pastelSky]      (cattle)  at (-5.5,  2.0) {Cattle};
+\node[res, fill=pastelSky]      (boar)    at (-3.0,  2.0) {Wild Boar};
+\node[res, fill=pastelSky]      (sheep)   at (-0.5,  2.0) {Sheep};
+\node[res, fill=pastelLavender] (donkey)  at ( 2.0,  2.0) {Donkey};
+\node[res, fill=pastelLemon]    (veg)     at (-4.5, -2.0) {Vegetable};
+\node[res, fill=pastelLemon]    (grain)   at (-2.0, -2.0) {Grain};
+\node[res, fill=pastelPeach]    (gold)    at ( 0.5, -2.0) {Gold};
+\node[res, fill=pastelCoral]    (ruby)    at ( 3.0, -2.0) {Ruby};
+% Arrows with conversion rates
+\draw[arr] (cattle) -- (F) node[rate, midway, above, sloped] {4};
+\draw[arr] (boar)   -- (F) node[rate, midway, above, sloped] {3};
+\draw[arr] (sheep)  -- (F) node[rate, midway, above, sloped] {2};
+\draw[arr] (donkey) -- (F) node[rate, midway, above, sloped] {1 or 1.5/ea};
+\draw[arr] (veg)    -- (F) node[rate, midway, below, sloped] {2};
+\draw[arr] (grain)  -- (F) node[rate, midway, below, sloped] {1};
+\draw[arr] (gold)   -- (F) node[rate, midway, below, sloped] {$n{-}1$ (lossy)};
+\draw[arr] (ruby)   -- (F) node[rate, midway, below, sloped] {$\geq 2$};
+% Donkey annotation
+\node[font=\tiny, text=textDark, anchor=west, align=left] at (3.3, 2.5)
+  {1 donkey $\to$ 1 food\\2 donkeys $\to$ 3 food\\(superlinear)};
+% Gold annotation
+\node[font=\tiny, text=accentAmber, anchor=north] at (0.5, -2.7)
+  {1 gold wasted};
+\end{tikzpicture}
+\caption{Food conversion network.  All resources ultimately convert to food
+at varying rates.  Cattle is the most efficient animal source; gold conversion
+is lossy (1 unit overhead); rubies serve as emergency food ($\geq 2$ each).
+Donkeys exhibit a superlinear pairing bonus.}
+\label{fig:food_flow}
+\end{figure}
+
+\begin{theorem}[Cattle is most efficient]
+  \label{thm:cattle_efficient}
+  \lean{Caverna.cattle_most_efficient}
+  \leanok
+  \uses{def:animal_food}
+  Cattle gives strictly more food than wild boar and sheep per animal.
+\end{theorem}
+
+\begin{proof}\leanok $4 > 3 > 2$.\end{proof}
+
+\begin{theorem}[Vegetable over grain]
+  \label{thm:veg_over_grain}
+  \lean{Caverna.vegetable_over_grain}
+  \leanok
+  Vegetables give $2\times$ the food of grain (2 vs.\ 1).
+\end{theorem}
+
+\begin{proof}\leanok By definition of food values.\end{proof}
+
+\section{Gold-to-food conversion}
+
+\begin{definition}[Gold to food]
+  \label{def:gold_food}
+  \lean{Caverna.goldToFood}
+  \leanok
+  Converting $n$ gold to food yields $\max(0, n-1)$ food.
+  This is lossy: $1$ gold is wasted as overhead.
+\end{definition}
+
+\begin{theorem}[Gold conversion is lossy]
+  \label{thm:gold_lossy}
+  \lean{Caverna.gold_food_lossy, Caverna.gold_one_worthless}
+  \leanok
+  \uses{def:gold_food}
+  $\text{goldToFood}(2) = 1$ and $\text{goldToFood}(1) = 0$.
+\end{theorem}
+
+\begin{proof}\leanok Direct from the formula $\max(0, n-1)$.\end{proof}
+
+\section{Feeding costs}
+
+\begin{definition}[Feeding cost]
+  \label{def:feeding_cost}
+  \lean{Caverna.feedingCost}
+  \leanok
+  $\text{feedingCost}(d, o) = 2d + o$ where $d$ is the number of
+  adult dwarfs and $o$ the number of offspring.
+\end{definition}
+
+\begin{theorem}[Two-dwarf feeding]
+  \label{thm:two_dwarf_feed}
+  \lean{Caverna.two_dwarf_feeding}
+  \leanok
+  \uses{def:feeding_cost}
+  $\text{feedingCost}(2, 0) = 4$.
+\end{theorem}
+
+\begin{proof}\leanok $2 \cdot 2 + 0 = 4$.\end{proof}
+
+\begin{theorem}[Five-dwarf feeding]
+  \label{thm:five_dwarf_feed}
+  \lean{Caverna.five_dwarf_feeding, Caverna.feeding_with_offspring}
+  \leanok
+  \uses{def:feeding_cost}
+  $\text{feedingCost}(5, 0) = 10$ and $\text{feedingCost}(5, 1) = 11$.
+\end{theorem}
+
+\begin{proof}\leanok By computation.\end{proof}
+
+\section{The universal food crisis}
+
+\begin{theorem}[Starting food is insufficient]
+  \label{thm:food_insufficient}
+  \lean{Caverna.starting_food_insufficient}
+  \leanok
+  \uses{def:feeding_cost, def:initial_state}
+  Player~1's starting food ($1$) is strictly less than the first
+  harvest feeding cost ($4$): $1 < \text{feedingCost}(2, 0)$.
+\end{theorem}
+
+\begin{proof}\leanok $1 < 4$.\end{proof}
+
+\begin{theorem}[First harvest deficit]
+  \label{thm:first_deficit}
+  \lean{Caverna.first_harvest_deficit}
+  \leanok
+  \uses{def:feeding_cost, def:initial_state}
+  $\text{feedingCost}(2,0) - \text{startingFoodP1} = 3$.
+  Every player faces a 3-food deficit at the first harvest.
+\end{theorem}
+
+\begin{proof}\leanok $4 - 1 = 3$.\end{proof}
+
+\begin{theorem}[Universal food crisis]
+  \label{thm:universal_food_crisis}
+  \lean{Caverna.universal_food_crisis}
+  \leanok
+  \uses{thm:first_deficit, thm:food_insufficient}
+  Both players face a food deficit at the first harvest:
+  $\text{feedingCost}(2,0) - \text{startingFoodP1} = 3$ and
+  $\text{feedingCost}(2,0) - \text{startingFoodP2} = 2$.
+  This structural constraint forces every viable strategy to
+  solve the food problem within its first $3$ actions.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  \uses{thm:first_deficit, thm:food_insufficient}
+  Player~1 starts with $1$ food and needs $4$, a gap of $3$.
+  Player~2 starts with $2$ food and needs $4$, a gap of $2$.
+\end{proof}
+
+\begin{theorem}[Ruby emergency food]
+  \label{thm:ruby_emergency}
+  \lean{Caverna.ruby_emergency_food}
+  \leanok
+  Rubies can be converted to at least $2$ food each, serving as
+  an emergency food source.
+\end{theorem}
+
+\begin{proof}\leanok By the ruby conversion rules.\end{proof}

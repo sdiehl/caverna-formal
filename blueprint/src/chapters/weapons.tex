@@ -1,0 +1,151 @@
+\chapter{Weapon System}
+
+Weapons enable expeditions, which provide loot (resources, animals,
+furnishing actions).  This chapter formalizes weapon forging, expedition
+strength growth, and the loot table, which are needed to evaluate the
+weapon rush archetype.
+
+\section{Forging and growth}
+
+\begin{definition}[Weapon forging]
+  \label{def:forge}
+  \lean{Caverna.forgeWeapon, Caverna.upgradeWeapon}
+  \leanok
+  A weapon is forged at strength $s \in [1,8]$ by spending $s$ ore.
+  After each expedition, the weapon's strength increases by $1$,
+  up to a cap of $14$.
+\end{definition}
+
+\begin{theorem}[Maximum forge strength]
+  \label{thm:max_forge}
+  \lean{Caverna.max_forge_strength, Caverna.cannot_forge_above_8}
+  \leanok
+  \uses{def:forge}
+  A weapon can be forged at strength $8$ (costing $8$ ore).
+  No weapon can be forged above strength $8$.
+\end{theorem}
+
+\begin{proof}\leanok By the forging rules: valid range is $[1,8]$.\end{proof}
+
+\begin{theorem}[Expedition increases strength]
+  \label{thm:exp_increase}
+  \lean{Caverna.expedition_increases_strength, Caverna.weapon_cap}
+  \leanok
+  \uses{def:forge}
+  If $s < 14$, an expedition raises strength to $s+1$.
+  At $s = 14$, strength stays at $14$.
+\end{theorem}
+
+\begin{proof}\leanok Direct from the upgrade function definition.\end{proof}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  str/.style={circle, minimum size=0.55cm, inner sep=0pt, font=\tiny\bfseries,
+              text=textDark, draw=textDark, thin},
+  forge/.style={str, fill=pastelSky},
+  exp/.style={str, fill=pastelPeach},
+  maxcap/.style={str, fill=pastelCoral, draw=accentAmber, thick},
+  arr/.style={-{Stealth[length=3pt]}, thin, color=textDark},
+]
+% Forge range: 1-8
+\foreach \s in {1,...,8} {
+  \node[forge] (s\s) at (\s * 0.85, 0) {\s};
+}
+% Expedition range: 9-13
+\foreach \s in {9,...,13} {
+  \node[exp] (s\s) at (\s * 0.85, 0) {\s};
+}
+% Cap: 14
+\node[maxcap] (s14) at (14 * 0.85, 0) {14};
+% Arrows between consecutive
+\foreach \s [evaluate=\s as \t using int(\s+1)] in {1,...,13} {
+  \draw[arr] (s\s) -- (s\t);
+}
+% Forge bracket
+\draw[accentBlue, thick, decorate, decoration={brace, amplitude=4pt, mirror}]
+  (0.85*1 - 0.35, -0.5) -- (0.85*8 + 0.35, -0.5)
+  node[midway, below=5pt, font=\tiny, text=accentBlue] {Forge range (1--8 ore)};
+% Expedition bracket
+\draw[accentAmber, thick, decorate, decoration={brace, amplitude=4pt, mirror}]
+  (0.85*9 - 0.35, -0.5) -- (0.85*14 + 0.35, -0.5)
+  node[midway, below=5pt, font=\tiny, text=accentAmber] {Expedition only};
+% Cattle threshold
+\draw[accentTeal, thick, dashed] (0.85*9 - 0.15, 0.55) -- (0.85*9 - 0.15, 0.9);
+\node[font=\tiny, text=accentTeal, anchor=south] at (0.85*9, 0.95) {Cattle loot $\geq 9$};
+% Legend
+\node[forge, label={[font=\tiny, text=textDark]right:forgeable}] at (1.0, -1.4) {};
+\node[exp, label={[font=\tiny, text=textDark]right:expedition growth}] at (4.0, -1.4) {};
+\node[maxcap, label={[font=\tiny, text=textDark]right:cap}] at (7.5, -1.4) {};
+\end{tikzpicture}
+\caption{Weapon strength growth path.  Weapons are forged at strength $1$--$8$
+(costing that many ore), then grow by $+1$ per expedition up to the cap of $14$.
+Cattle loot requires reaching strength $\geq 9$, which needs at least one expedition
+after forging.}
+\label{fig:weapon_path}
+\end{figure}
+
+\begin{theorem}[Expeditions to max]
+  \label{thm:exp_to_max}
+  \lean{Caverna.expeditions_from_max_forge, Caverna.expeditions_from_min_forge}
+  \leanok
+  \uses{thm:exp_increase, thm:max_forge}
+  Starting from strength $8$, it takes $6$ expeditions to reach $14$.
+  Starting from strength $1$, it takes $13$.
+\end{theorem}
+
+\begin{proof}\leanok $14 - 8 = 6$ and $14 - 1 = 13$.\end{proof}
+
+\section{Loot table}
+
+\begin{definition}[Available loot]
+  \label{def:loot}
+  \lean{Caverna.availableLootCount, Caverna.ExpeditionLevel}
+  \leanok
+  The number of loot options available depends on weapon strength.
+  Higher strength unlocks more valuable loot items.
+\end{definition}
+
+\begin{theorem}[Loot at key strengths]
+  \label{thm:loot_values}
+  \lean{Caverna.loot_at_strength_1, Caverna.loot_at_strength_8, Caverna.loot_at_strength_14}
+  \leanok
+  \uses{def:loot}
+  At strength $1$: $3$ loot options.
+  At strength $8$: $13$ options.
+  At strength $14$: $18$ options.
+\end{theorem}
+
+\begin{proof}\leanok By enumeration of the loot table.\end{proof}
+
+\begin{theorem}[Loot monotonicity]
+  \label{thm:loot_monotone}
+  \lean{Caverna.loot_monotone_small}
+  \leanok
+  \uses{def:loot}
+  $\text{availableLootCount}(1) \le \text{availableLootCount}(8)$.
+\end{theorem}
+
+\begin{proof}\leanok $3 \le 13$.\end{proof}
+
+\begin{theorem}[Premium loot count]
+  \label{thm:premium_loot}
+  \lean{Caverna.premium_loot_count}
+  \leanok
+  \uses{def:loot}
+  $\text{availableLootCount}(14) - \text{availableLootCount}(8) = 5$.
+  The last $5$ loot items require strength above $8$.
+\end{theorem}
+
+\begin{proof}\leanok $18 - 13 = 5$.\end{proof}
+
+\begin{theorem}[Cattle requires expedition]
+  \label{thm:cattle_expedition}
+  \lean{Caverna.cattle_requires_expedition}
+  \leanok
+  \uses{def:loot}
+  Cattle's minimum required strength exceeds the maximum initial
+  weapon strength, meaning cattle can only be obtained through expeditions.
+\end{theorem}
+
+\begin{proof}\leanok Cattle requires strength $\ge 9$, but weapons forge at $\le 8$.\end{proof}

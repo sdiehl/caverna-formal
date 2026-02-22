@@ -1,0 +1,195 @@
+\chapter{Scoring System}
+
+The end-game scoring function converts a player state into an integer score.
+This chapter formalizes the scoring rules and proves key properties
+that constrain the score range of any strategy.
+
+\section{Scoring components}
+
+\begin{definition}[Animal scoring]
+  \label{def:score_animals}
+  \lean{Caverna.scoreAnimals, Caverna.penaltyMissingAnimals}
+  \leanok
+  Each farm animal (sheep, wild boar, cattle) scores $1$ point per animal.
+  For each of the three farm animal types not represented at all, the player
+  loses $2$ points.  Dogs score $0$ directly but enable sheep capacity.
+\end{definition}
+
+\begin{definition}[Crop scoring]
+  \label{def:score_crops}
+  \lean{Caverna.scoreGrain, Caverna.scoreVegetables}
+  \leanok
+  Grain scores $\lfloor (n+1)/2 \rfloor$ for $n$ grain.
+  Vegetables score $1$ per vegetable.
+\end{definition}
+
+\begin{definition}[Infrastructure scoring]
+  \label{def:score_infra}
+  \lean{Caverna.scorePastures, Caverna.scoreMines, Caverna.scoreDwarfs, Caverna.scoreGold, Caverna.scoreRubies}
+  \leanok
+  Small pastures score $2$ each, large pastures $4$ each.
+  Ore mines score $3$, ruby mines score $4$.
+  Each dwarf scores $1$.
+  Gold scores $1$ per gold.
+  Rubies score $1$ per ruby.
+\end{definition}
+
+\begin{definition}[Penalties]
+  \label{def:penalties}
+  \lean{Caverna.penaltyBegging, Caverna.penaltyUnusedSpaces}
+  \leanok
+  Each begging marker costs $3$ points.
+  Each unused board space costs $1$ point.
+\end{definition}
+
+\begin{definition}[Total score]
+  \label{def:total_score}
+  \lean{Caverna.computeScore, Caverna.ScoreBreakdown}
+  \leanok
+  \uses{def:score_animals, def:score_crops, def:score_infra, def:penalties}
+  The total score is the sum of all positive scoring components
+  minus all penalties, plus furnishing bonus points.
+\end{definition}
+
+\section{Score bounds}
+
+\begin{theorem}[Missing animal penalty bound]
+  \label{thm:max_missing_penalty}
+  \lean{Caverna.max_missing_animal_penalty}
+  \leanok
+  \uses{def:score_animals}
+  For any animal counts $a$, $\text{penaltyMissingAnimals}(a) \le 8$.
+  (At most 4 types missing at 2 points each.)
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  By case analysis on which animal types are present.
+\end{proof}
+
+\begin{theorem}[No penalty with all types]
+  \label{thm:no_missing_all_types}
+  \lean{Caverna.no_missing_penalty_if_all_types}
+  \leanok
+  \uses{def:score_animals}
+  If a player has at least one of each farm animal type,
+  $\text{penaltyMissingAnimals}(a) = 0$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  Each type is present, so no $-2$ penalty applies.
+\end{proof}
+
+\begin{theorem}[Begging is harsh]
+  \label{thm:begging_harsh}
+  \lean{Caverna.begging_is_harsh, Caverna.begging_penalty_linear}
+  \leanok
+  \uses{def:penalties}
+  For $n > 0$, $\text{penaltyBegging}(n) \ge 3$.
+  In fact $\text{penaltyBegging}(n) = 3n$ (linear).
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  Direct from the definition $\text{penaltyBegging}(n) = 3n$.
+\end{proof}
+
+\begin{theorem}[Grain score monotonicity]
+  \label{thm:grain_monotone}
+  \lean{Caverna.grain_score_monotone}
+  \leanok
+  \uses{def:score_crops}
+  If $a \le b$ then $\text{scoreGrain}(a) \le \text{scoreGrain}(b)$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  The function $\lfloor (n+1)/2 \rfloor$ is non-decreasing.
+\end{proof}
+
+\begin{theorem}[Worst-case unused spaces]
+  \label{thm:worst_unused}
+  \lean{Caverna.worst_case_unused_penalty}
+  \leanok
+  \uses{def:penalties, def:board}
+  $\text{penaltyUnusedSpaces}(24) = 24$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  By computation.
+\end{proof}
+
+\begin{theorem}[Ruby mine beats ore mine]
+  \label{thm:ruby_beats_ore}
+  \lean{Caverna.ruby_mine_beats_ore_mine}
+  \leanok
+  \uses{def:score_infra}
+  $\text{scoreMines}(0,1) > \text{scoreMines}(1,0)$, i.e., a single ruby mine
+  scores strictly more than a single ore mine.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  $\text{scoreMines}(0,1) = 4 > 3 = \text{scoreMines}(1,0)$.
+\end{proof}
+
+\section{Global score range}
+
+\begin{definition}[Score bounds]
+  \label{def:score_bounds}
+  \lean{Caverna.theoreticalMinScore, Caverna.doNothingScore, Caverna.theoreticalMaxSum, Caverna.practicalCeiling, Caverna.practicalFloor}
+  \leanok
+  \uses{def:total_score, def:board}
+  We define several reference points:
+  \begin{itemize}
+    \item $\text{theoreticalMinScore} = -28$ (max penalties, zero positive).
+    \item $\text{doNothingScore} = -55$ (skip all actions for 12 rounds).
+    \item $\text{theoreticalMaxSum} = 202$ (sum of maxed individual categories).
+    \item $\text{practicalCeiling} = 140$ (attainable upper bound).
+    \item $\text{practicalFloor} = 60$ (competent-play lower bound).
+  \end{itemize}
+\end{definition}
+
+\begin{theorem}[Theoretical minimum score]
+  \label{thm:theoretical_min}
+  \lean{Caverna.theoretical_min_is_neg28}
+  \leanok
+  \uses{def:score_bounds}
+  $\text{theoreticalMinScore} = -28$.
+\end{theorem}
+
+\begin{proof}\leanok By computation.\end{proof}
+
+\begin{theorem}[Do-nothing score]
+  \label{thm:do_nothing}
+  \lean{Caverna.absolute_floor_is_neg55, Caverna.do_nothing_is_catastrophic, Caverna.do_nothing_negative}
+  \leanok
+  \uses{def:score_bounds}
+  $\text{doNothingScore} = -55 < 0$.
+\end{theorem}
+
+\begin{proof}\leanok Direct computation: 12 rounds of harvests with no food
+produces $\text{doNothingBeggingMarkers} = 9$ begging markers
+($-27$ points), plus $-24$ unused spaces, plus $-4$ missing animal types.\end{proof}
+
+\begin{theorem}[Ceiling below theoretical max]
+  \label{thm:ceiling_bound}
+  \lean{Caverna.ceiling_below_theoretical_max}
+  \leanok
+  \uses{def:score_bounds}
+  $\text{practicalCeiling} < \text{theoreticalMaxSum}$, i.e., $140 < 202$.
+\end{theorem}
+
+\begin{proof}\leanok By computation.\end{proof}
+
+\begin{theorem}[Scoring range]
+  \label{thm:scoring_range}
+  \lean{Caverna.scoring_range}
+  \leanok
+  \uses{def:score_bounds}
+  $\text{practicalCeiling} - \text{doNothingScore} = 195$.
+\end{theorem}
+
+\begin{proof}\leanok $140 - (-55) = 195$.\end{proof}

@@ -1,0 +1,164 @@
+\chapter{Game Model}
+
+This chapter establishes the formal model of 2-player Caverna as a finite
+extensive-form game.  We define the core types (resources, animals, crops,
+weapons, dwarfs), the player state, the board geometry, and the game state
+machine.
+
+\section{Core types}
+
+\begin{definition}[Resources and animals]
+  \label{def:core_types}
+  \lean{Caverna.Resource, Caverna.AnimalType, Caverna.FarmAnimalType, Caverna.CropType}
+  \leanok
+  The game has seven resource types (wood, stone, ore, gold, grain, vegetables, food),
+  four animal types (dogs, sheep, wild boar, cattle, where dogs are non-farm animals),
+  and two crop types (grain, vegetables).
+\end{definition}
+
+\begin{definition}[Weapons and dwarfs]
+  \label{def:weapons_dwarfs}
+  \lean{Caverna.Weapon, Caverna.Dwarf}
+  \leanok
+  A weapon has integer strength in $[1,14]$.  A dwarf optionally carries a weapon.
+  Each player begins with $2$ dwarfs (Definition~\ref{def:initial_state}).
+\end{definition}
+
+\begin{definition}[Player state]
+  \label{def:player_state}
+  \lean{Caverna.PlayerState}
+  \leanok
+  \uses{def:core_types, def:weapons_dwarfs}
+  A player state tracks: the list of dwarfs, resource supplies
+  (wood, stone, ore, gold, grain, vegetables, food, rubies),
+  animal counts, board tile placements (mountain spaces, forest spaces,
+  meadows, fields, pastures, mines), installed furnishing tiles,
+  and accumulated begging markers.
+\end{definition}
+
+\begin{definition}[Initial state]
+  \label{def:initial_state}
+  \lean{Caverna.initialDwarfCount, Caverna.startingFoodP1, Caverna.startingFoodP2, Caverna.initialPlayerState}
+  \leanok
+  \uses{def:player_state}
+  Each player starts with $2$ unarmed dwarfs.
+  Player~1 receives $1$ food; Player~2 receives $2$ food.
+  All other resources and animals start at zero.
+  The initial dwarf count is $\text{initialDwarfCount} = 2$.
+\end{definition}
+
+\section{Game structure}
+
+\begin{definition}[Action spaces]
+  \label{def:action_spaces}
+  \lean{Caverna.ActionSpaceId, Caverna.actionSpaceRound}
+  \leanok
+  The game has $24$ action spaces.  Thirteen are available from round~1
+  (preprinted); the rest are revealed one per round.
+  Each space can be occupied by at most one dwarf per round.
+\end{definition}
+
+\begin{definition}[Harvest schedule]
+  \label{def:harvest}
+  \lean{Caverna.twoPlayerHarvestSchedule, Caverna.HarvestEvent}
+  \leanok
+  In the 2-player game, harvests occur on a fixed schedule across 12 rounds.
+  Round~3 always triggers a normal harvest (Theorem~\ref{thm:round3_harvest}).
+\end{definition}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  rnd/.style={circle, minimum size=0.6cm, inner sep=0pt, font=\tiny\bfseries,
+              text=textDark, draw=textDark, thin},
+  normal/.style={rnd, fill=pastelCream},
+  harvest/.style={rnd, fill=pastelMint, draw=accentGreen, thick},
+  milestone/.style={font=\tiny, text=accentBlue, align=center},
+]
+% Round nodes
+\foreach \r in {1,...,12} {
+  \node[normal] (r\r) at (\r * 0.9, 0) {\r};
+}
+% Mark harvest rounds (depends on 2p schedule; rounds 3,5,7,9,10,11,12 are common)
+% From the Lean source: harvests at rounds 3, 5, 7, 9, 10, 11, 12
+\foreach \r in {3,5,7,9,10,11,12} {
+  \node[harvest] (r\r) at (\r * 0.9, 0) {\r};
+}
+% Arrows
+\foreach \r [evaluate=\r as \t using int(\r+1)] in {1,...,11} {
+  \draw[-{Stealth[length=2.5pt]}, thin, textDark] (r\r) -- (r\t);
+}
+% Milestones
+\draw[accentBlue, thin, dashed] (4*0.9, -0.45) -- (4*0.9, -1.0);
+\node[milestone] at (4*0.9, -1.3) {Wish for\\Children};
+\draw[accentBlue, thin, dashed] (8*0.9, -0.45) -- (8*0.9, -1.0);
+\node[milestone] at (8*0.9, -1.3) {Family\\Life};
+% Action space count annotation
+\draw[accentAmber, thick, decorate, decoration={brace, amplitude=4pt}]
+  (1*0.9 - 0.35, 0.55) -- (12*0.9 + 0.35, 0.55)
+  node[midway, above=5pt, font=\tiny, text=accentAmber] {13 preprinted + 1 new per round = 24 total action spaces};
+% Legend
+\node[normal, label={[font=\tiny, text=textDark]right:normal round}] at (2.5, -2.2) {};
+\node[harvest, label={[font=\tiny, text=textDark]right:harvest round (feeding)}] at (6.5, -2.2) {};
+\end{tikzpicture}
+\caption{Game timeline for 2-player Caverna.  Green nodes mark harvest rounds
+where dwarfs must be fed.  Key milestones: ``Wish for Children'' (round~4) and
+``Family Life'' (round~8) enable family growth.  One new action space is revealed
+each round, growing from $13$ to $24$ available spaces.}
+\label{fig:timeline}
+\end{figure}
+
+\begin{definition}[Board geometry]
+  \label{def:board}
+  \lean{Caverna.totalBoardSpaces}
+  \leanok
+  The personal player board has $24$ spaces total
+  (Theorem~\ref{thm:board_24}).
+\end{definition}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  state/.style={rounded corners=5pt, minimum width=2.0cm, minimum height=0.7cm,
+                font=\scriptsize, text=textDark, draw=textDark, thin, align=center},
+  trans/.style={-{Stealth[length=5pt]}, thick, color=textDark},
+  act/.style={font=\tiny, text=accentTeal, fill=white, inner sep=1.5pt},
+]
+% States
+\node[state, fill=pastelCream] (s0) at (0, 0) {Start of round\\2 dwarfs, 1 food};
+\node[state, fill=pastelSky]   (s1) at (4.5, 1.2) {Place dwarf 1\\on Logging};
+\node[state, fill=pastelSky]   (s2) at (4.5, -1.2) {Place dwarf 1\\on Excavation};
+\node[state, fill=pastelLemon] (s3) at (9.0, 1.2) {+3 wood\\Place dwarf 2};
+\node[state, fill=pastelLemon] (s4) at (9.0, -1.2) {+1 stone, tunnel\\Place dwarf 2};
+\node[state, fill=pastelMint]  (s5) at (13.0, 0) {All placed\\$\to$ Harvest?};
+% Transitions
+\draw[trans] (s0) -- (s1) node[act, midway, above, sloped] {Logging};
+\draw[trans] (s0) -- (s2) node[act, midway, below, sloped] {Excavation};
+\draw[trans] (s1) -- (s3) node[act, midway, above] {collect};
+\draw[trans] (s2) -- (s4) node[act, midway, above] {collect};
+\draw[trans] (s3) -- (s5) node[act, midway, above, sloped] {place dwarf 2};
+\draw[trans] (s4) -- (s5) node[act, midway, below, sloped] {place dwarf 2};
+% Dots indicating more branches
+\node[font=\large, text=pastelSlate] at (4.5, 0) {$\vdots$};
+\node[font=\tiny, text=pastelSlate, anchor=west] at (5.0, 0) {11 other actions};
+\end{tikzpicture}
+\caption{Fragment of the game state machine (labelled transition system) for one
+round.  Each state records the player's resources and remaining dwarfs to place.
+Transitions correspond to action space selections.  With $13$ initial action
+spaces and $2$ dwarfs, even a single round produces $13 \times 12 = 156$
+placement sequences.}
+\label{fig:lts}
+\end{figure}
+
+\begin{theorem}[Board has 24 spaces]
+  \label{thm:board_24}
+  \lean{Caverna.board_has_24_spaces}
+  \leanok
+  \uses{def:board}
+  $\text{totalBoardSpaces} = 24$.
+\end{theorem}
+
+\begin{proof}
+  \leanok
+  By computation.
+\end{proof}
