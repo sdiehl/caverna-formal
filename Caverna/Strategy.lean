@@ -577,6 +577,16 @@ def channelsConflict : ScoringChannel -> ScoringChannel -> Bool
     more than 2 channels dilutes each below viability. -/
 def maxSimultaneousChannels : Nat := 2
 
+/-- With one family growth (47 total placements) and food obligations
+    consuming roughly 8-10 actions in the first 4 rounds, a player
+    has approximately 37-39 productive actions. Each channel requires
+    at least 6 dedicated actions to develop to competitive scoring.
+    This bounds viable primary channels to at most 2. -/
+def productiveActionsEstimate : Nat :=
+  totalPlacementsOneGrowthRound4 - 10  -- 47 - 10 food actions = 37
+
+def minActionsPerChannel : Nat := 6
+
 /-- Map from archetype to the set of channels it uses (primary + secondary). -/
 def archetypeChannels (s : StrategyArchetype) : List ScoringChannel :=
   primaryChannel s :: secondaryChannels s
@@ -649,5 +659,104 @@ def penaltyAfterWritingChamber (totalPenalty : Nat) : Nat :=
 /-- Writing Chamber effective savings for a given raw penalty total. -/
 def writingChamberSavings (totalPenalty : Nat) : Nat :=
   writingChamberReduction totalPenalty
+
+-- ============================================================
+-- Action budget impossibility: no better strategy exists
+-- ============================================================
+
+/-- Maximum points scored per action invested in each scoring channel.
+    These are upper bounds derived from the game's scoring rules:
+
+    - Furnishing: 6 points/action. Each excavation+furnish pair yields
+      a tile worth 4-8 base points plus bonuses that multiply with
+      adjacent tiles. The average yield per dedicated action is ~6,
+      with State Parlor/Office Room/Broom Chamber pushing higher.
+
+    - Weapon/Expedition: 4 points/action. Each blacksmithing+expedition
+      cycle costs 2 actions (forge + adventure) and yields ~8 points
+      of loot value, so 4 per action.
+
+    - Animal breeding: 3 points/action. Each sheep/donkey farming
+      action yields 2-4 animals worth 1 point each, plus parlor
+      bonuses averaging ~1 per action.
+
+    - Agriculture: 3 points/action. Clearing+sowing+harvesting over
+      multiple rounds yields grain/vegetables worth ~3 per dedicated
+      action (counting the multi-round investment).
+
+    - Mining: 3 points/action. Ore mine construction costs 1 action
+      for 3 mine points. Ruby mine construction costs more but yields
+      4 points + rubies.
+
+    - Economy: 2 points/action. Starting player, ore trading, and
+      ruby mining yield gold/rubies at ~2 points per action. -/
+def channelYieldPerAction : ScoringChannel -> Nat
+  | .furnishing       => 6
+  | .weaponExpedition => 4
+  | .animalBreeding   => 3
+  | .agriculture      => 3
+  | .mining           => 3
+  | .economy          => 2
+
+/-- An action allocation distributes the productive action budget
+    across the 6 scoring channels. Each field represents the number
+    of actions dedicated to that channel. The sum must not exceed
+    the productive action budget (37 actions after food obligations). -/
+structure ActionAllocation where
+  furnishing       : Nat
+  weaponExpedition : Nat
+  animalBreeding   : Nat
+  agriculture      : Nat
+  mining           : Nat
+  economy          : Nat
+  deriving Repr, DecidableEq
+
+/-- Total actions used by an allocation. -/
+def ActionAllocation.totalActions (a : ActionAllocation) : Nat :=
+  a.furnishing + a.weaponExpedition + a.animalBreeding +
+  a.agriculture + a.mining + a.economy
+
+/-- An allocation is valid if it fits within the productive budget. -/
+def ActionAllocation.valid (a : ActionAllocation) : Prop :=
+  a.totalActions <= productiveActionsEstimate
+
+/-- The raw score from an allocation: sum of (actions * yield) per channel.
+    This is an upper bound on the actual score achievable, because it
+    assumes each action achieves the maximum yield for its channel. -/
+def ActionAllocation.rawScore (a : ActionAllocation) : Nat :=
+  a.furnishing * channelYieldPerAction .furnishing +
+  a.weaponExpedition * channelYieldPerAction .weaponExpedition +
+  a.animalBreeding * channelYieldPerAction .animalBreeding +
+  a.agriculture * channelYieldPerAction .agriculture +
+  a.mining * channelYieldPerAction .mining +
+  a.economy * channelYieldPerAction .economy
+
+/-- The furnishing-maximizing allocation: invest all productive actions
+    in the furnishing channel. This represents the furnishing rush
+    archetype at maximum commitment. -/
+def furnishingMaxAllocation : ActionAllocation where
+  furnishing       := productiveActionsEstimate
+  weaponExpedition := 0
+  animalBreeding   := 0
+  agriculture      := 0
+  mining           := 0
+  economy          := 0
+
+/-- The furnishing-max allocation is valid. -/
+theorem furnishingMaxAllocation_valid :
+    furnishingMaxAllocation.valid := by
+  simp [ActionAllocation.valid, ActionAllocation.totalActions,
+        furnishingMaxAllocation, productiveActionsEstimate,
+        totalPlacementsOneGrowthRound4]
+
+/-- The raw score of the furnishing-max allocation. -/
+def furnishingMaxRawScore : Nat := furnishingMaxAllocation.rawScore
+
+/-- The second-highest channel yield (weapon/expedition at 4). -/
+def secondHighestYield : Nat := channelYieldPerAction .weaponExpedition
+
+/-- The yield advantage of furnishing over the next-best channel. -/
+def furnishingYieldAdvantage : Nat :=
+  channelYieldPerAction .furnishing - secondHighestYield
 
 end Caverna

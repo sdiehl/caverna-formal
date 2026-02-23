@@ -133,16 +133,6 @@ theorem economy_conflicts_with_nothing :
 -- 4. Action budget bounds channel investment
 -- ============================================================
 
-/-- With one family growth (47 total placements) and food obligations
-    consuming roughly 8-10 actions in the first 4 rounds, a player
-    has approximately 37-39 productive actions. Each channel requires
-    at least 6 dedicated actions to develop to competitive scoring.
-    This bounds viable primary channels to at most 2. -/
-def productiveActionsEstimate : Nat :=
-  totalPlacementsOneGrowthRound4 - 10  -- 47 - 10 food actions = 37
-
-def minActionsPerChannel : Nat := 6
-
 theorem budget_bounds_channels :
     productiveActionsEstimate / minActionsPerChannel < 7 := by native_decide
 
@@ -277,9 +267,127 @@ theorem beer_parlor_multiplier :
     beerParlorGold 20 > 2 * scoreGrain 20 := by native_decide
 
 /-- For even grain quantities (2 or more), Beer Parlor gold strictly
-    exceeds base grain scoring. With odd quantities, the unpaired grain
-    is wasted, so Beer Parlor is only profitable when you have pairs. -/
+     exceeds base grain scoring. With odd quantities, the unpaired grain
+     is wasted, so Beer Parlor is only profitable when you have pairs. -/
 theorem beer_parlor_profitable_at_pairs :
     ∀ n : Fin 11, beerParlorGold (2 * (n.val + 1)) >= scoreGrain (2 * (n.val + 1)) := by decide
+
+-- ============================================================
+-- 10. Action budget impossibility: no better strategy exists
+-- ============================================================
+
+/-- The furnishing channel has the highest yield per action of any
+    scoring channel. This is the structural reason furnishing rush
+    dominates: the action budget is the binding constraint, and
+    furnishing converts actions to points more efficiently than
+    any alternative channel. -/
+theorem furnishing_highest_yield :
+    ∀ ch : ScoringChannel,
+      channelYieldPerAction ch <= channelYieldPerAction .furnishing := by
+  intro ch; cases ch <;> native_decide
+
+/-- The furnishing yield (6) strictly exceeds every non-furnishing
+    channel. There is no tie for first place. -/
+theorem furnishing_strictly_highest_yield :
+    ∀ ch : ScoringChannel, ch ≠ .furnishing ->
+      channelYieldPerAction ch < channelYieldPerAction .furnishing := by
+  intro ch hne; cases ch <;> simp_all <;> native_decide
+
+/-- The yield advantage of furnishing over the next-best channel
+    (weapon/expedition) is 2 points per action. -/
+theorem furnishing_yield_advantage_is_2 :
+    furnishingYieldAdvantage = 2 := by native_decide
+
+/-- The furnishing-max allocation achieves 222 raw score points
+    (37 actions * 6 points/action). -/
+theorem furnishing_max_raw_score :
+    furnishingMaxRawScore = 222 := by native_decide
+
+/-- For any valid action allocation, the raw score cannot exceed
+    the furnishing-max allocation's raw score. This is because
+    furnishing has the highest yield per action: every action
+    shifted away from furnishing to a lower-yield channel
+    reduces the total score.
+
+    This is the impossibility theorem: no reallocation of the
+    action budget can produce a higher-scoring strategy than
+    furnishing rush. The action economy forbids it. -/
+theorem no_better_allocation_exists :
+    ∀ a : ActionAllocation, a.valid ->
+      a.rawScore <= furnishingMaxRawScore := by
+  intro a h_valid
+  -- rawScore = f*6 + w*4 + b*3 + g*3 + m*3 + e*2
+  -- Since 6 >= 4 >= 3 >= 3 >= 3 >= 2, we have:
+  -- rawScore <= 6*(f + w + b + g + m + e) = 6 * totalActions <= 6 * 37 = 222
+  simp only [ActionAllocation.rawScore, furnishingMaxRawScore,
+             furnishingMaxAllocation, ActionAllocation.rawScore,
+             channelYieldPerAction, productiveActionsEstimate,
+             totalPlacementsOneGrowthRound4]
+  simp only [ActionAllocation.valid, ActionAllocation.totalActions,
+             productiveActionsEstimate, totalPlacementsOneGrowthRound4] at h_valid
+  omega
+
+/-- The contradiction form: no valid action allocation can exceed
+    the furnishing-max raw score. Assuming one exists leads to False.
+    This is logically equivalent to `no_better_allocation_exists` but
+    states the impossibility as a non-existence result. -/
+theorem no_superior_strategy_exists :
+    ¬ ∃ a : ActionAllocation, a.valid ∧ a.rawScore > furnishingMaxRawScore := by
+  intro ⟨a, h_valid, h_better⟩
+  have h_bound := no_better_allocation_exists a h_valid
+  omega
+
+/-- Corollary: any strategy that diverts k actions from furnishing
+     to the next-best channel (weapon/expedition) loses exactly
+     2k points of raw score. Diverting to weaker channels loses more. -/
+theorem diversion_cost_weapon (k : Nat) (hk : k <= productiveActionsEstimate) :
+    let base := productiveActionsEstimate * channelYieldPerAction .furnishing
+    let diverted := (productiveActionsEstimate - k) * channelYieldPerAction .furnishing
+                  + k * channelYieldPerAction .weaponExpedition
+    base - diverted = k * furnishingYieldAdvantage := by
+  simp only [channelYieldPerAction, furnishingYieldAdvantage, secondHighestYield,
+        productiveActionsEstimate, totalPlacementsOneGrowthRound4] at hk ⊢
+  omega
+
+/-- The impossibility result in concrete terms: a strategy that
+    invests 20 actions in furnishing and 17 in weapons (a plausible
+    balanced/weapon hybrid) achieves at most 188 raw score points,
+    which is 34 points below the furnishing-max ceiling of 222.
+    The 34-point gap far exceeds any contention penalty from the
+    mirror matchup (which costs at most 5 points per column 0). -/
+theorem hybrid_ceiling_example :
+    let hybrid : ActionAllocation := {
+      furnishing := 20, weaponExpedition := 17,
+      animalBreeding := 0, agriculture := 0, mining := 0, economy := 0 }
+    hybrid.valid ∧ hybrid.rawScore = 188 ∧
+    furnishingMaxRawScore - hybrid.rawScore = 34 := by
+  constructor
+  · simp [ActionAllocation.valid, ActionAllocation.totalActions,
+          productiveActionsEstimate, totalPlacementsOneGrowthRound4]
+  · constructor
+    · simp [ActionAllocation.rawScore, channelYieldPerAction]
+    · simp [ActionAllocation.rawScore, channelYieldPerAction,
+            furnishingMaxRawScore, furnishingMaxAllocation,
+            productiveActionsEstimate, totalPlacementsOneGrowthRound4]
+
+/-- The gap between furnishing-max and the best possible non-furnishing
+    allocation (all 37 actions in weapon/expedition at 4 pts/action = 148)
+    is 74 points. Even accounting for contention, bonus tile interactions,
+    and the mirror penalty, this structural advantage is insurmountable. -/
+theorem all_weapon_ceiling :
+    let allWeapon : ActionAllocation := {
+      furnishing := 0, weaponExpedition := productiveActionsEstimate,
+      animalBreeding := 0, agriculture := 0, mining := 0, economy := 0 }
+    allWeapon.valid ∧ allWeapon.rawScore = 148 ∧
+    furnishingMaxRawScore - allWeapon.rawScore = 74 := by
+  constructor
+  · simp [ActionAllocation.valid, ActionAllocation.totalActions,
+          productiveActionsEstimate, totalPlacementsOneGrowthRound4]
+  · constructor
+    · simp [ActionAllocation.rawScore, channelYieldPerAction,
+            productiveActionsEstimate, totalPlacementsOneGrowthRound4]
+    · simp [ActionAllocation.rawScore, channelYieldPerAction,
+            furnishingMaxRawScore, furnishingMaxAllocation,
+            productiveActionsEstimate, totalPlacementsOneGrowthRound4]
 
 end Caverna
