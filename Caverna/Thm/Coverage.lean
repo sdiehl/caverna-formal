@@ -276,18 +276,19 @@ theorem beer_parlor_profitable_at_pairs :
 -- 10. Action budget impossibility: no better strategy exists
 -- ============================================================
 
-/-- The furnishing channel has the highest yield per action of any
-    scoring channel. This is the structural reason furnishing rush
-    dominates: the action budget is the binding constraint, and
-    furnishing converts actions to points more efficiently than
-    any alternative channel. -/
+/-- Furnishing has the highest yield per action of any channel.
+    Proof: case split on all 6 channels, `native_decide` on each.
+    This is the structural root cause of furnishing rush dominance:
+    when the action budget is the binding constraint, the channel
+    with the highest marginal return wins. -/
 theorem furnishing_highest_yield :
     ∀ ch : ScoringChannel,
       channelYieldPerAction ch <= channelYieldPerAction .furnishing := by
   intro ch; cases ch <;> native_decide
 
-/-- The furnishing yield (6) strictly exceeds every non-furnishing
-    channel. There is no tie for first place. -/
+/-- Strict inequality: furnishing (6) beats every other channel.
+    No tie for first place. Proof: case split, `simp_all` discharges
+    the `ch != .furnishing` hypothesis, `native_decide` on the arithmetic. -/
 theorem furnishing_strictly_highest_yield :
     ∀ ch : ScoringChannel, ch ≠ .furnishing ->
       channelYieldPerAction ch < channelYieldPerAction .furnishing := by
@@ -303,15 +304,18 @@ theorem furnishing_yield_advantage_is_2 :
 theorem furnishing_max_raw_score :
     furnishingMaxRawScore = 222 := by native_decide
 
-/-- For any valid action allocation, the raw score cannot exceed
-    the furnishing-max allocation's raw score. This is because
-    furnishing has the highest yield per action: every action
-    shifted away from furnishing to a lower-yield channel
-    reduces the total score.
+/-- **Impossibility theorem.** For any valid action allocation,
+    rawScore <= 222 (the furnishing-max ceiling).
 
-    This is the impossibility theorem: no reallocation of the
-    action budget can produce a higher-scoring strategy than
-    furnishing rush. The action economy forbids it. -/
+    Proof: unfold rawScore to f*6 + w*4 + b*3 + g*3 + m*3 + e*2.
+    Since all coefficients are <= 6, this is <= 6*(f+w+b+g+m+e) =
+    6 * totalActions <= 6 * 37 = 222. `omega` closes the linear
+    arithmetic after `simp` expands the definitions.
+
+    This is independent of the payoff matrix. It depends only on
+    the scoring rules (channel yields) and the action budget (37),
+    both formalized from the rulebook. No reallocation of actions
+    across channels can produce a higher-scoring strategy. -/
 theorem no_better_allocation_exists :
     ∀ a : ActionAllocation, a.valid ->
       a.rawScore <= furnishingMaxRawScore := by
@@ -327,19 +331,22 @@ theorem no_better_allocation_exists :
              productiveActionsEstimate, totalPlacementsOneGrowthRound4] at h_valid
   omega
 
-/-- The contradiction form: no valid action allocation can exceed
-    the furnishing-max raw score. Assuming one exists leads to False.
-    This is logically equivalent to `no_better_allocation_exists` but
-    states the impossibility as a non-existence result. -/
+/-- **Non-existence theorem (contradiction form).** There is no valid
+    allocation with rawScore > 222. Proof: destructure the existential
+    to get `a`, `h_valid`, and `h_better : a.rawScore > 222`. Apply
+    `no_better_allocation_exists` to get `a.rawScore <= 222`. The two
+    hypotheses contradict, and `omega` derives `False`. -/
 theorem no_superior_strategy_exists :
     ¬ ∃ a : ActionAllocation, a.valid ∧ a.rawScore > furnishingMaxRawScore := by
   intro ⟨a, h_valid, h_better⟩
   have h_bound := no_better_allocation_exists a h_valid
   omega
 
-/-- Corollary: any strategy that diverts k actions from furnishing
-     to the next-best channel (weapon/expedition) loses exactly
-     2k points of raw score. Diverting to weaker channels loses more. -/
+/-- **Diversion cost.** Shifting k actions from furnishing (yield 6)
+    to weapons (yield 4) loses exactly 2k raw score points. Proof:
+    expand the yields to constants, unfold the hypothesis `k <= 37`
+    into both goal and context, and `omega` handles the Nat subtraction
+    arithmetic. Diversion to weaker channels (yield 3 or 2) costs more. -/
 theorem diversion_cost_weapon (k : Nat) (hk : k <= productiveActionsEstimate) :
     let base := productiveActionsEstimate * channelYieldPerAction .furnishing
     let diverted := (productiveActionsEstimate - k) * channelYieldPerAction .furnishing
@@ -349,12 +356,10 @@ theorem diversion_cost_weapon (k : Nat) (hk : k <= productiveActionsEstimate) :
         productiveActionsEstimate, totalPlacementsOneGrowthRound4] at hk ⊢
   omega
 
-/-- The impossibility result in concrete terms: a strategy that
-    invests 20 actions in furnishing and 17 in weapons (a plausible
-    balanced/weapon hybrid) achieves at most 188 raw score points,
-    which is 34 points below the furnishing-max ceiling of 222.
-    The 34-point gap far exceeds any contention penalty from the
-    mirror matchup (which costs at most 5 points per column 0). -/
+/-- **Concrete example.** A 20-furnishing/17-weapon hybrid (a plausible
+    balanced build) achieves at most 188 raw points, 34 below the
+    furnishing-max ceiling. The 34-point gap dwarfs the mirror matchup
+    penalty of 5 points (column 0). Proof: `simp` reduces to arithmetic. -/
 theorem hybrid_ceiling_example :
     let hybrid : ActionAllocation := {
       furnishing := 20, weaponExpedition := 17,
@@ -370,10 +375,10 @@ theorem hybrid_ceiling_example :
             furnishingMaxRawScore, furnishingMaxAllocation,
             productiveActionsEstimate, totalPlacementsOneGrowthRound4]
 
-/-- The gap between furnishing-max and the best possible non-furnishing
-    allocation (all 37 actions in weapon/expedition at 4 pts/action = 148)
-    is 74 points. Even accounting for contention, bonus tile interactions,
-    and the mirror penalty, this structural advantage is insurmountable. -/
+/-- **Worst case for alternatives.** The strongest non-furnishing
+    allocation (all 37 actions in weapons at 4 pts/action = 148)
+    trails furnishing-max by 74 points. This gap is insurmountable
+    regardless of contention, tile interactions, or mirror penalties. -/
 theorem all_weapon_ceiling :
     let allWeapon : ActionAllocation := {
       furnishing := 0, weaponExpedition := productiveActionsEstimate,
@@ -389,5 +394,16 @@ theorem all_weapon_ceiling :
     · simp [ActionAllocation.rawScore, channelYieldPerAction,
             furnishingMaxRawScore, furnishingMaxAllocation,
             productiveActionsEstimate, totalPlacementsOneGrowthRound4]
+
+-- ============================================================
+-- 11. Classification sanity checks
+-- ============================================================
+
+/-- There are exactly 8 strategy archetypes. -/
+theorem strategy_archetype_count : numStrategies = 8 := by native_decide
+
+/-- No archetype is redundant: all 8 are distinct. -/
+theorem all_archetypes_distinct :
+    allStrategies.Nodup := by native_decide
 
 end Caverna

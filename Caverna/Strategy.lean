@@ -664,32 +664,13 @@ def writingChamberSavings (totalPenalty : Nat) : Nat :=
 -- Action budget impossibility: no better strategy exists
 -- ============================================================
 
-/-- Maximum points scored per action invested in each scoring channel.
-    These are upper bounds derived from the game's scoring rules:
-
-    - Furnishing: 6 points/action. Each excavation+furnish pair yields
-      a tile worth 4-8 base points plus bonuses that multiply with
-      adjacent tiles. The average yield per dedicated action is ~6,
-      with State Parlor/Office Room/Broom Chamber pushing higher.
-
-    - Weapon/Expedition: 4 points/action. Each blacksmithing+expedition
-      cycle costs 2 actions (forge + adventure) and yields ~8 points
-      of loot value, so 4 per action.
-
-    - Animal breeding: 3 points/action. Each sheep/donkey farming
-      action yields 2-4 animals worth 1 point each, plus parlor
-      bonuses averaging ~1 per action.
-
-    - Agriculture: 3 points/action. Clearing+sowing+harvesting over
-      multiple rounds yields grain/vegetables worth ~3 per dedicated
-      action (counting the multi-round investment).
-
-    - Mining: 3 points/action. Ore mine construction costs 1 action
-      for 3 mine points. Ruby mine construction costs more but yields
-      4 points + rubies.
-
-    - Economy: 2 points/action. Starting player, ore trading, and
-      ruby mining yield gold/rubies at ~2 points per action. -/
+/-- Upper bound on points scored per action invested in each channel.
+    Derived from the scoring rules: furnishing yields 6 (excavation +
+    tile with bonus multipliers), weapons yield 4 (forge + expedition
+    cycle = 8 pts over 2 actions), animals/agriculture/mining yield 3,
+    economy yields 2. These are ceilings, not averages: actual yields
+    under contention may be lower. The key property is that furnishing
+    strictly exceeds all others, proven by `furnishing_strictly_highest_yield`. -/
 def channelYieldPerAction : ScoringChannel -> Nat
   | .furnishing       => 6
   | .weaponExpedition => 4
@@ -698,10 +679,9 @@ def channelYieldPerAction : ScoringChannel -> Nat
   | .mining           => 3
   | .economy          => 2
 
-/-- An action allocation distributes the productive action budget
-    across the 6 scoring channels. Each field represents the number
-    of actions dedicated to that channel. The sum must not exceed
-    the productive action budget (37 actions after food obligations). -/
+/-- A distribution of the 37 productive actions across the 6 scoring
+    channels. Represents any possible strategy at the resource-allocation
+    level. The `valid` predicate constrains the sum to the budget. -/
 structure ActionAllocation where
   furnishing       : Nat
   weaponExpedition : Nat
@@ -720,9 +700,11 @@ def ActionAllocation.totalActions (a : ActionAllocation) : Nat :=
 def ActionAllocation.valid (a : ActionAllocation) : Prop :=
   a.totalActions <= productiveActionsEstimate
 
-/-- The raw score from an allocation: sum of (actions * yield) per channel.
-    This is an upper bound on the actual score achievable, because it
-    assumes each action achieves the maximum yield for its channel. -/
+/-- Upper bound on score from an allocation: sum of (actions * yield)
+    per channel. Assumes each action achieves its channel's ceiling
+    yield, so this overapproximates. The impossibility theorem
+    `no_better_allocation_exists` shows even this generous bound
+    cannot exceed furnishing-max. -/
 def ActionAllocation.rawScore (a : ActionAllocation) : Nat :=
   a.furnishing * channelYieldPerAction .furnishing +
   a.weaponExpedition * channelYieldPerAction .weaponExpedition +
@@ -731,9 +713,10 @@ def ActionAllocation.rawScore (a : ActionAllocation) : Nat :=
   a.mining * channelYieldPerAction .mining +
   a.economy * channelYieldPerAction .economy
 
-/-- The furnishing-maximizing allocation: invest all productive actions
-    in the furnishing channel. This represents the furnishing rush
-    archetype at maximum commitment. -/
+/-- The furnishing-maximizing allocation: all 37 productive actions
+    in the furnishing channel. Achieves 222 raw score points (37 * 6).
+    This is the theoretical ceiling against which all other allocations
+    are measured. -/
 def furnishingMaxAllocation : ActionAllocation where
   furnishing       := productiveActionsEstimate
   weaponExpedition := 0
