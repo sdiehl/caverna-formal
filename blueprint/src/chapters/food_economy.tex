@@ -12,7 +12,7 @@ all viable strategies.
   \label{def:animal_food}
   \lean{Caverna.donkeyFoodValue, Caverna.cattleFoodValue, Caverna.wildBoarFoodValue, Caverna.sheepFoodValue}
   \leanok
-  Sheep convert to $2$ food, wild boar to $3$, cattle to $4$.
+  Sheep convert to $1$ food, wild boar to $2$, cattle to $3$.
   Donkeys have a superlinear pairing bonus: $1$ donkey gives $1$ food,
   but pairs give $3$ food (a $+1$ bonus per pair).
 \end{definition}
@@ -49,9 +49,9 @@ all viable strategies.
 \node[res, fill=pastelPeach]    (gold)    at ( 0.5, -2.0) {Gold};
 \node[res, fill=pastelCoral]    (ruby)    at ( 3.0, -2.0) {Ruby};
 % Arrows with conversion rates
-\draw[arr] (cattle) -- (F) node[rate, midway, above, sloped] {4};
-\draw[arr] (boar)   -- (F) node[rate, midway, above, sloped] {3};
-\draw[arr] (sheep)  -- (F) node[rate, midway, above, sloped] {2};
+\draw[arr] (cattle) -- (F) node[rate, midway, above, sloped] {3};
+\draw[arr] (boar)   -- (F) node[rate, midway, above, sloped] {2};
+\draw[arr] (sheep)  -- (F) node[rate, midway, above, sloped] {1};
 \draw[arr] (donkey) -- (F) node[rate, midway, above, sloped] {1 or 1.5/ea};
 \draw[arr] (veg)    -- (F) node[rate, midway, below, sloped] {2};
 \draw[arr] (grain)  -- (F) node[rate, midway, below, sloped] {1};
@@ -79,7 +79,7 @@ Donkeys exhibit a superlinear pairing bonus.}
   Cattle gives strictly more food than wild boar and sheep per animal.
 \end{theorem}
 
-\begin{proof}\leanok $4 > 3 > 2$.\end{proof}
+\begin{proof}\leanok $3 > 2 > 1$.\end{proof}
 
 \begin{theorem}[Vegetable over grain]
   \label{thm:veg_over_grain}
