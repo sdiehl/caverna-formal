@@ -2,6 +2,8 @@
 
 Formal proof that **furnishing rush** is the unique weakly dominant strategy in 2-player Caverna.
 
+> Note: this is a fun hobby project that I haven't independently verified. I'm just putting it online for fun, so don't take it too seriously, it's a board game after all.
+
 [Blueprint](https://sdiehl.github.io/caverna-formal/blueprint/)
 
 ## Install
