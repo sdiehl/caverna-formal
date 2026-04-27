@@ -1,0 +1,16 @@
+repos:
+  - repo: local
+    hooks:
+      - id: blueprint-pdf
+        name: blueprint LaTeX compiles
+        entry: bash -c 'cd blueprint/src && latexmk -pdf -interaction=nonstopmode -halt-on-error print.tex >/dev/null && latexmk -c print.tex >/dev/null'
+        language: system
+        pass_filenames: false
+        files: '^blueprint/src/.*\.(tex|sty)$'
+
+      - id: checkdecls
+        name: blueprint declarations match Lean
+        entry: bash -c 'if [ -f blueprint/lean_decls ]; then lake exe checkdecls blueprint/lean_decls; else echo "skip blueprint/lean_decls not present, run leanblueprint pdf to generate"; fi'
+        language: system
+        pass_filenames: false
+        files: '^(Caverna/.*\.lean|Caverna\.lean|blueprint/lean_decls)$'
