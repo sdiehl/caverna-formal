@@ -35,7 +35,7 @@ namespace Caverna
 inductive Phase where
   | placeP1      -- player 1 places a dwarf
   | placeP2      -- player 2 places a dwarf
-  | harvest      -- harvest phase (feeding, breeding, fields)
+  | harvest      -- harvest phase (field, feeding, breeding, in that order)
   | roundEnd     -- round cleanup, advance to next round
   | gameOver     -- game has ended
   deriving Repr, DecidableEq, BEq
@@ -67,7 +67,7 @@ structure GState where
 /-- A game action: dwarf placement with choice, or phase transition. -/
 inductive GameAction where
   | place (space : ActionSpaceId) (choice : ActionChoice)
-  | feedHarvest       -- pay food for harvest
+  | feedHarvest (p1Plan p2Plan : FeedingPlan)  -- each player chooses their conversions
   | takeBegging       -- cannot pay, take begging markers
   | advanceRound      -- move to next round
   | endGame           -- game terminates
@@ -271,9 +271,13 @@ def FullPlayer.breedingPhase (p : FullPlayer) : FullPlayer :=
            wildBoars := p.wildBoars + extraBoar,
            cattle := p.cattle + extraCattle }
 
-/-- Full harvest: field phase + feeding + breeding. -/
-def FullPlayer.normalHarvest (p : FullPlayer) : FullPlayer :=
-  p.fieldPhase.feed.breedingPhase
+/-- Full harvest in rulebook order: field phase, then feeding (using
+    the player's chosen FeedingPlan), then breeding. The plan is the
+    player's choice of which goods to convert; the rules permit any
+    subset (including none) and convert the remaining shortfall into
+    begging markers. -/
+def FullPlayer.normalHarvest (p : FullPlayer) (fp : FeedingPlan) : FullPlayer :=
+  (p.fieldPhase.feed fp).breedingPhase
 
 -- ============================================================
 -- Initial game state
@@ -337,25 +341,34 @@ def cavernaLTS (schedule : Nat -> HarvestEvent) :
                          phase := .placeP1, placementsLeft := newPlacements,
                          occupiedSpaces := newOccupied })
     -- Harvest phase
-    | .harvest, .feedHarvest =>
+    | .harvest, .feedHarvest p1Plan p2Plan =>
       let event := gs.harvestSchedule gs.round
+      -- Each player's chosen plan must only convert goods they own.
+      -- After the field phase the available grain/vegetables grow, so
+      -- validity for crop-using plans is checked against the post-field
+      -- player state for normal/skip harvests, and against the current
+      -- player state for payOnePerDwarf (no field phase).
       match event with
       | .normalHarvest =>
-        let p1' := gs.p1.normalHarvest
-        let p2' := gs.p2.normalHarvest
-        gs' = { gs with p1 := p1', p2 := p2', phase := .roundEnd }
+        p1Plan.valid gs.p1.fieldPhase ∧ p2Plan.valid gs.p2.fieldPhase ∧
+        (let p1' := gs.p1.normalHarvest p1Plan
+         let p2' := gs.p2.normalHarvest p2Plan
+         gs' = { gs with p1 := p1', p2 := p2', phase := .roundEnd })
       | .noHarvest =>
         gs' = { gs with phase := .roundEnd }
       | .payOnePerDwarf =>
-        let p1' := gs.p1.feedRound4
-        let p2' := gs.p2.feedRound4
-        gs' = { gs with p1 := p1', p2 := p2', phase := .roundEnd }
+        p1Plan.valid gs.p1 ∧ p2Plan.valid gs.p2 ∧
+        (let p1' := gs.p1.feedRound4 p1Plan
+         let p2' := gs.p2.feedRound4 p2Plan
+         gs' = { gs with p1 := p1', p2 := p2', phase := .roundEnd })
       | .skipFieldOrBreeding =>
-        -- Choose field OR breeding, must still feed
-        -- We model the "best case" for each player
-        let p1' := gs.p1.fieldPhase.feed
-        let p2' := gs.p2.fieldPhase.feed
-        gs' = { gs with p1 := p1', p2 := p2', phase := .roundEnd }
+        -- Choose field OR breeding; we model the field-then-feed branch.
+        -- (The breed-then-feed alternative would not change feeding cost
+        -- since animals do not consume food.)
+        p1Plan.valid gs.p1.fieldPhase ∧ p2Plan.valid gs.p2.fieldPhase ∧
+        (let p1' := gs.p1.fieldPhase.feed p1Plan
+         let p2' := gs.p2.fieldPhase.feed p2Plan
+         gs' = { gs with p1 := p1', p2 := p2', phase := .roundEnd })
     -- Skip harvest (early rounds)
     | .harvest, .takeBegging =>
       gs' = { gs with phase := .roundEnd }

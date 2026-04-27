@@ -64,4 +64,39 @@ def feedingCost (numAdultDwarfs numOffspring : Nat) : Nat :=
 def round4FeedingCost (totalDwarfs : Nat) : Nat :=
   totalDwarfs
 
+/-- A player's chosen conversions for a single feeding phase.
+    The Caverna rules (rulebook p.11) make every conversion a player
+    choice: at feeding time the player may convert any goods they like
+    (grain, vegetables, sheep, donkeys, wild boars, cattle, rubies, gold)
+    or accept begging markers for the missing food. This structure
+    records that choice so the LTS transition relation can quantify
+    over all valid plans rather than pretending feeding is deterministic. -/
+structure FeedingPlan where
+  grain      : Nat := 0
+  vegetables : Nat := 0
+  sheep      : Nat := 0
+  donkeys    : Nat := 0
+  wildBoars  : Nat := 0
+  cattle     : Nat := 0
+  rubies     : Nat := 0
+  gold       : Nat := 0
+  deriving Repr, DecidableEq, BEq
+
+/-- Total food produced by a feeding plan, using each good's
+    conversion rate (donkeys use the super-linear pair rule). -/
+def FeedingPlan.foodYield (fp : FeedingPlan) : Nat :=
+  fp.grain      * grainFoodValue +
+  fp.vegetables * vegetableFoodValue +
+  fp.sheep      * sheepFoodValue +
+  donkeyFoodValue fp.donkeys +
+  fp.wildBoars  * wildBoarFoodValue +
+  fp.cattle     * cattleFoodValue +
+  fp.rubies     * rubyFoodValue +
+  goldToFood fp.gold
+
+/-- The empty plan: convert nothing, accept begging markers for the
+    full feeding cost. The rules permit this even when the player has
+    convertible goods on hand. -/
+def FeedingPlan.empty : FeedingPlan := {}
+
 end Caverna

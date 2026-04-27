@@ -378,35 +378,52 @@ def FullPlayer.score (p : FullPlayer) : Int :=
 -- Feeding logic
 -- ============================================================
 
-/-- Feed a player during harvest. Adults cost 2 food, offspring cost 1.
-    Uses food first, then converts goods, then takes begging markers. -/
-def FullPlayer.feed (p : FullPlayer) : FullPlayer :=
-  let cost := p.dwarfs * 2 + p.offspring * 1
-  if p.food >= cost then
-    { p with food := p.food - cost }
-  else
-    let deficit := cost - p.food
-    let p' := { p with food := 0 }
-    -- Try converting grain (1 food each)
-    let grainUsed := min p'.grain deficit
-    let p'' := { p' with grain := p'.grain - grainUsed }
-    let deficit' := deficit - grainUsed
-    -- Try converting vegetables (2 food each)
-    let vegUsed := min p''.vegetables (deficit' / 2 + deficit' % 2)
-    let vegFood := min (vegUsed * 2) deficit'
-    let p''' := { p'' with vegetables := p''.vegetables - vegUsed }
-    let deficit'' := deficit' - vegFood
-    -- Remaining deficit becomes begging markers
-    { p''' with beggingMarkers := p'''.beggingMarkers + deficit'' }
+/-- A feeding plan is valid for a player when each conversion does
+    not exceed what the player actually owns. Conversion is otherwise
+    free: the player may convert any subset they like, including none. -/
+def FeedingPlan.valid (fp : FeedingPlan) (p : FullPlayer) : Prop :=
+  fp.grain      <= p.grain      ∧
+  fp.vegetables <= p.vegetables ∧
+  fp.sheep      <= p.sheep      ∧
+  fp.donkeys    <= p.donkeys    ∧
+  fp.wildBoars  <= p.wildBoars  ∧
+  fp.cattle     <= p.cattle     ∧
+  fp.rubies     <= p.rubies     ∧
+  fp.gold       <= p.gold
 
-/-- Feed during round 4 special (1 food per dwarf including offspring). -/
-def FullPlayer.feedRound4 (p : FullPlayer) : FullPlayer :=
-  let cost := p.dwarfs + p.offspring
-  if p.food >= cost then
-    { p with food := p.food - cost }
-  else
-    let deficit := cost - p.food
-    { p with food := 0, beggingMarkers := p.beggingMarkers + deficit }
+/-- Apply a feeding plan against a feeding cost: deduct the converted
+    goods, combine the yielded food with stored food to pay the cost,
+    and convert any remaining shortfall into begging markers (one per
+    missing food, worth -3 points each). -/
+def FullPlayer.applyFeedingPlan (p : FullPlayer) (fp : FeedingPlan)
+    (cost : Nat) : FullPlayer :=
+  let available := p.food + fp.foodYield
+  let foodAfter := if available >= cost then available - cost else 0
+  let deficit   := if available >= cost then 0 else cost - available
+  { p with
+      food           := foodAfter
+    , grain          := p.grain      - fp.grain
+    , vegetables     := p.vegetables - fp.vegetables
+    , sheep          := p.sheep      - fp.sheep
+    , donkeys        := p.donkeys    - fp.donkeys
+    , wildBoars      := p.wildBoars  - fp.wildBoars
+    , cattle         := p.cattle     - fp.cattle
+    , rubies         := p.rubies     - fp.rubies
+    , gold           := p.gold       - fp.gold
+    , beggingMarkers := p.beggingMarkers + deficit }
+
+/-- Feed a player during a normal harvest using the given plan.
+    Adults cost 2 food, offspring (born this round) cost 1. The plan
+    is the player's choice of which goods to convert; passing the
+    empty plan models the player who refuses to convert anything and
+    instead takes a begging marker for every missing food. -/
+def FullPlayer.feed (p : FullPlayer) (fp : FeedingPlan) : FullPlayer :=
+  p.applyFeedingPlan fp (p.dwarfs * 2 + p.offspring * 1)
+
+/-- Feed during the round-4 special harvest using the given plan
+    (1 food per dwarf, including offspring). -/
+def FullPlayer.feedRound4 (p : FullPlayer) (fp : FeedingPlan) : FullPlayer :=
+  p.applyFeedingPlan fp (p.dwarfs + p.offspring)
 
 -- ============================================================
 -- Initial state

@@ -64,6 +64,27 @@ machine.
   \leanok
   In the 2-player game, harvests occur on a fixed schedule across 12 rounds.
   Round~3 always triggers a normal harvest (Theorem~\ref{thm:round3_harvest}).
+  A normal harvest consists of three sub-phases in this order: the
+  field phase (each sown field yields one of its crop), the feeding
+  phase, and the breeding phase (each animal type with at least two
+  members produces one offspring if the player has room).
+\end{definition}
+
+\begin{definition}[Feeding plan]
+  \label{def:feeding_plan}
+  \lean{Caverna.FeedingPlan, Caverna.FullPlayer.feed, Caverna.FullPlayer.applyFeedingPlan}
+  \leanok
+  \uses{def:harvest, def:feeding_cost}
+  In the feeding phase a player must pay the feeding cost (two food
+  per adult dwarf, one per offspring).  The rules let the player
+  convert any subset of their grain, vegetables, sheep, donkeys,
+  wild boars, cattle, rubies, and gold into food at the rates of
+  Definition~\ref{def:animal_food} and Definition~\ref{def:gold_food}.
+  Conversion is optional: a player may decline to convert any goods
+  and instead accept one begging marker per missing food, even when
+  convertible goods are on hand.  A \emph{feeding plan} records the
+  chosen conversions, and the labelled transition system quantifies
+  over all valid plans (each conversion bounded by the goods owned).
 \end{definition}
 
 \begin{figure}[ht]

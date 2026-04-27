@@ -117,8 +117,24 @@ Donkeys exhibit a superlinear pairing bonus.}
   \lean{Caverna.feedingCost}
   \leanok
   $\text{feedingCost}(d, o) = 2d + o$ where $d$ is the number of
-  adult dwarfs and $o$ the number of offspring.
+  adult dwarfs and $o$ the number of offspring.  Only dwarfs consume
+  food; animals never do, so the breeding phase that follows feeding
+  has no effect on the cost paid in the same round.
 \end{definition}
+
+\begin{remark}[Feeding is a player choice]
+  \label{rem:feeding_choice}
+  \lean{Caverna.FeedingPlan, Caverna.FullPlayer.feed}
+  \leanok
+  Per the rulebook, a player \emph{may} convert goods to food in the
+  feeding phase but is never required to.  Any food still missing
+  after the chosen conversions becomes begging markers ($-3$ points
+  each).  The convertible set covers grain, vegetables, all four farm
+  animals (sheep, donkeys, wild boars, cattle, including the donkey
+  pair bonus), rubies, and gold.  The formal model captures this
+  choice via a \texttt{FeedingPlan} (Definition~\ref{def:feeding_plan})
+  rather than fixing a deterministic conversion order.
+\end{remark}
 
 \begin{theorem}[Two-dwarf feeding]
   \label{thm:two_dwarf_feed}
